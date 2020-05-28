@@ -1,0 +1,23 @@
+{
+  "name": "chart-wrapper",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@material-ui/core": "^4.9.14",
+    "d3": "^5.16.0",
+    "echarts": "^4.8.0",
+    "echarts-for-react": "^2.0.16",
+    "immutable": "^4.0.0-rc.12",
+    "kd-tree-javascript": "^1.0.3",
+    "react": "^16.13.1",
+    "react-csv": "^2.0.3",
+    "react-dom": "^16.13.1",
+    "react-scripts": "1.1.5"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  }
+}
