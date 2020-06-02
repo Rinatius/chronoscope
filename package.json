@@ -8,11 +8,16 @@
     "echarts": "^4.8.0",
     "echarts-for-react": "^2.0.16",
     "immutable": "^4.0.0-rc.12",
-    "kd-tree-javascript": "^1.0.3",
+    "mathjs": "^7.0.0",
+    "ndarray": "^1.0.19",
+    "ndarray-ops": "^1.2.2",
+    "ndarray-scratch": "^1.2.0",
+    "numpy-parser": "^1.2.3",
     "react": "^16.13.1",
     "react-csv": "^2.0.3",
     "react-dom": "^16.13.1",
-    "react-scripts": "1.1.5"
+    "react-scripts": "1.1.5",
+    "static-kdtree": "^1.0.2"
   },
   "scripts": {
     "start": "react-scripts start",

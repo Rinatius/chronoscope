@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ChartWrapper from './ChartWrapper/ChartWrapper';
 import './App.css';
-import { tsv, scaleTime, extent, nest, timeFormat, sum, timeDays, range } from 'd3';
+import { text, csv, tsv, scaleTime, extent, nest, timeFormat, sum, timeDays, range } from 'd3';
 import Slider from '@material-ui/core/Slider';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
@@ -20,19 +20,37 @@ import { CSVDownload } from "react-csv";
 
 import ReactEcharts from "echarts-for-react";
 
+import {createConditionalNode, mean} from "mathjs";
+
+import { fromArrayBuffer } from "numpy-parser";
+
 const { List, Set, Map } = require('immutable');
+
+const createKDTree = require('static-kdtree');
+
+const ndarray = require("ndarray")
+
+const pool = require("ndarray-scratch")
+
+const ops = require("ndarray-ops")
+
 
 
 class App extends Component {
 
   state = {
     slider: [0, 100],
-    data_address: "https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/nuk%2BQ2%2Bs.csv?alt=media&token=187d3eda-38d9-4d6b-be2e-c35ed91be3fa",
+    data_url: "https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/nuk%2BQ2%2Bs.csv?alt=media&token=187d3eda-38d9-4d6b-be2e-c35ed91be3fa",
     regex: "",
     data: List([]),
     filteredData: List([]),
     exclude: List([]),
     timeFilteredData: List([]),
+    embeds_url: "https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/comments_embeddings.npy?alt=media&token=87cd348c-f954-49b9-8731-689421435d8b",
+    embeddings: [],
+    kdTree: null,
+    centroid: [],
+    maxPoints: 5,
     tag: "",
     tagSelector: "",
     prepareDownload: false,
@@ -49,6 +67,44 @@ class App extends Component {
       slider: newValue
     });
   };
+
+  downloadData = () => {
+    tsv(this.state.data_url, (d, i) => {
+      return Map({
+        key: i,
+        date: new Date(d.date),
+        sentence: d.sentence,
+        tags: Set(d.tags.split(","))
+      });
+    }).then(download => {
+              this.timeScale = scaleTime()
+                  .domain(extent(download, d => d.get("date").getTime()))
+                  .range([0, 100])
+              //let filtered = this.timeFilter(download, this.state.slider)
+              this.setState({data: List(download)});
+    });
+
+    if (this.state.embeds_url !== ""){
+      fetch(this.state.embeds_url)
+        .then(response => response.arrayBuffer())
+        .then(arrayBuffer => {
+          const data1D = fromArrayBuffer(arrayBuffer)
+          const embeddings = ndarray(data1D.data, data1D.shape);
+          const kdTree = createKDTree(embeddings)
+          console.log(kdTree.length)
+          console.log(kdTree.dimension)
+          this.setState({kdTree: kdTree})
+          this.setState({embeddings: embeddings})
+          })
+      /*text(this.state.embeds_url, "text/csv", f => csv.parseRows(f))
+        .then(embeddings => {
+          this.setState({kdTree: createKDTree(embeddings)})
+          this.setState({embeddings: embeddings})
+        });*/
+    }
+
+
+  }
 
   allFilter = () => {
     let filtered = []
@@ -98,14 +154,19 @@ class App extends Component {
   nestData = () => {
     let flatData = []
     let data = this.state.data.toJS()
+
+    //Denormalize data by tag
     data.forEach(d => d.tags.forEach(t => {
       d.tags = t
       flatData.push(d)
     }))
 
+    //Select time unit
     let day = timeFormat("%U");//timeFormat("%Y-%m-%d");
 
+    //Determine data time extent given time unit
     let dataExtent = extent(data, d => day(d.date));
+
     let timeRange = range(dataExtent[0], dataExtent[1]);
 
     let nestedAllTagsDates = nest().key(d => day(d.date))
@@ -139,6 +200,29 @@ class App extends Component {
       timeRange: timeRange
     })
   }
+
+  kdSearch = () => {
+    const nearestPoints = this.state.kdTree
+      .knn(this.state.centroid.data, 5)
+    const nearestRows = nearestPoints.map(d => this.state.data.get(d));
+    this.setState({filteredData: nearestRows})
+  }
+
+  ndMean = (data, indices) => {
+    let result = pool.zeros([data.shape[1]], data.dtype);
+    indices.forEach(d => {
+      ops.addeq(result, data.pick(d))});
+    ops.divseq(result, indices.length);
+    return result
+  };
+
+  calculateCentroid = () => {
+    const filteredIndices = this.state.filteredData.map(d => d.get("key"));
+    const centroid = this.ndMean(this.state.embeddings, filteredIndices.toJS());
+    this.setState({
+      centroid: centroid
+    });
+  };
 
   handleSliderCommitted = (event, newValue) => {
     if(this.state.data.length > 0){
@@ -175,6 +259,10 @@ class App extends Component {
     this.allFilter();
   };
 
+  handleCalculateCentroidClick = () => {
+    this.calculateCentroid();
+  };
+
   handleTagClick = () => {
     this.tag();
   };
@@ -190,24 +278,21 @@ class App extends Component {
   };
 
   handleNestDataClick = () => {
-    this.nestData()
+    this.nestData();
   };
 
   handleDownloadDataClick = () => {
-    tsv(this.state.data_address, (d, i) => {
-      return Map({
-        key: i,
-        date: new Date(d.date),
-        sentence: d.sentence,
-        tags: Set(d.tags.split(","))
-      });
-    }).then(download => {
-              this.timeScale = scaleTime()
-                  .domain(extent(download, d => d.get("date").getTime()))
-                  .range([0, 100])
-              //let filtered = this.timeFilter(download, this.state.slider)
-              this.setState({data: List(download)});
+    this.downloadData()
+  };
+
+  handleMaxPointsChange = (event) => {
+    this.setState({
+      maxPoints: event.target.value
     });
+  };
+
+  handleNNSearchClick = () => {
+    this.kdSearch();
   };
 
   componentDidUpdate(prevProps, prevState) {
@@ -215,8 +300,7 @@ class App extends Component {
     if (prevState && prevState.prepareDownload) {
       this.setState({prepareDownload: false});
     }
-  }
-
+  };
 
   render() {
 
@@ -234,7 +318,12 @@ class App extends Component {
             id="tsv_address"
             label="TSV Address"
             onChange={this.handleTextChange}
-            value={this.state.data_address} />
+            value={this.state.data_url} />
+            <TextField
+            id="embeddings_address"
+            label="Embeddings Address"
+            onChange={this.handleTextChange}
+            value={this.state.embeds_url} />
           <Button
             variant="contained"
             onClick={this.handleDownloadDataClick}>
@@ -256,6 +345,24 @@ class App extends Component {
           onClick={this.handleFilterClick}>
           Filter
         </Button>
+        <Button
+          variant="contained"
+          onClick={this.handleCalculateCentroidClick}>
+          Calculate Centroid
+        </Button>
+         <div>
+          <TextField
+            id="tag_field"
+            label="Maximum points around centroid"
+            type="number"
+            onChange={this.handleMaxPointsChange}
+            value={this.state.maxPoints} />
+          <Button
+            variant="contained"
+            onClick={this.handleNNSearchClick}>
+            NN-search around current centroid
+          </Button>
+        </div>
         <div>
           <TextField
             id="tag_field"
