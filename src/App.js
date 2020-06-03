@@ -204,7 +204,7 @@ class App extends Component {
   kdSearch = () => {
     const nearestPoints = this.state.kdTree
       .knn(this.state.centroid.data, 5)
-    const nearestRows = nearestPoints.map(d => this.state.data.get(d));
+    const nearestRows = List(nearestPoints.map(d => this.state.data.get(d)));
     this.setState({filteredData: nearestRows})
   }
 
@@ -231,9 +231,15 @@ class App extends Component {
     })}
   };
 
-  handleTextChange = (event) => {
+  handleDataUrlChange = (event) => {
     this.setState({
-      data_address: event.target.value
+      data_url: event.target.value
+    });
+  };
+
+  handleEmbedsUrlChange = (event) => {
+    this.setState({
+      embeds_url: event.target.value
     });
   };
 
@@ -317,12 +323,12 @@ class App extends Component {
           <TextField
             id="tsv_address"
             label="TSV Address"
-            onChange={this.handleTextChange}
+            onChange={this.handleDataUrlChange}
             value={this.state.data_url} />
             <TextField
             id="embeddings_address"
             label="Embeddings Address"
-            onChange={this.handleTextChange}
+            onChange={this.handleEmbedsUrlChange}
             value={this.state.embeds_url} />
           <Button
             variant="contained"
