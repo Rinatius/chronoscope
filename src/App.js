@@ -74,7 +74,8 @@ class App extends Component {
         key: i,
         date: new Date(d.date),
         sentence: d.sentence,
-        tags: Set(d.tags.split(","))
+        tags: Set(d.tags.split(",")),
+        negtags: ("negtags" in d) ? Set(d.negtags.split(",")) : Set([])
       });
     }).then(download => {
               this.timeScale = scaleTime()
@@ -139,6 +140,15 @@ class App extends Component {
   }
 
   removeRow = (index) => {
+    if (this.state.tag !== "") {
+      let data = this.state.data;
+      let row = this.state.filteredData.get(index);
+      row = row.update("negtags", d => d.add(this.state.tag))
+      data = data.set(row.get("key"), row)
+      this.setState({
+        data: data
+      })
+    }
     this.setState({
       filteredData: this.state.filteredData.delete(index)
     })
@@ -546,6 +556,7 @@ class App extends Component {
                 <TableRow>
                   <TableCell>Sentence</TableCell>
                   <TableCell align="left">Tags</TableCell>
+                  <TableCell align="left">Negtags</TableCell>
                   <TableCell align="left">Date</TableCell>
                 </TableRow>
               </TableHead>
@@ -557,6 +568,7 @@ class App extends Component {
                   >
                     <TableCell align="left">{row.get("sentence")}</TableCell>
                     <TableCell>{JSON.stringify(row.get("tags"))}</TableCell>
+                    <TableCell>{JSON.stringify(row.get("negtags"))}</TableCell>
                     <TableCell align="left">
                       {row.get("date").getFullYear()}/
                       {row.get("date").getMonth()}/
