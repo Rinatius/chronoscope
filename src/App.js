@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import ChartWrapper from './ChartWrapper/ChartWrapper';
 import './App.css';
 import { text, csv, tsv, scaleTime, extent, nest, timeFormat, sum, timeDays, range } from 'd3';
-import Slider from '@material-ui/core/Slider';
 import Button from '@material-ui/core/Button';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -13,13 +12,13 @@ import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import BigTable from "./BigTable/BigTable";
 import { CSVDownload } from "react-csv";
-import ReactEcharts from "echarts-for-react";
 import {createConditionalNode, mean} from "mathjs";
 import { fromArrayBuffer } from "numpy-parser";
 import DownloadData from './Components/DownloadData/DownloadData'
 import FilterData from './Components/FilterData/FilterData'
 import Centroid from './Components/Centroid/Centroid'
 import TagData from './Components/TagData/TagData'
+import Charts from './Components/Charts/Charts'
 
 
 const { List, Set, Map } = require('immutable');
@@ -337,6 +336,10 @@ class App extends Component {
     this.setState({showCharts: !charts})
   }
 
+  handleExternalToolTip = (dataIndex) => {
+    this.setState({externalToolTip: dataIndex})
+  }
+
   componentDidUpdate(prevProps, prevState) {
     // Don't forget to compare states
     if (prevState && prevState.prepareDownload) {
@@ -355,156 +358,20 @@ class App extends Component {
     }
     let charts = null;
     if (this.state.showCharts) {
-      charts =
-        <div>
-          <div>{this.state.externalToolTip}</div>
-          <ReactEcharts
-            option={{
-              tooltip: {
-                trigger: 'axis',
-                formatter: (params => {
-                  //console.log("params: ", params);
-                  this.setState({
-                    externalToolTip: "Data index: " + params[0].dataIndex
-                  })
-                }),
-                axisPointer: {
-                  animation: false
-                }
-              },
-              legend: {
-                data: ["check", "check1", "check"],/*this.state.nestedData
-                  .filter(d => d.key !== "")
-                  .map(d => d.key),*/
-                left: 10
-              },
-              xAxis: {
-                type: "category",
-                data: this.state.timeRange
-              },
-              yAxis: {
-                type: "value"
-              },
-              series: this.state.nestedData
-                .filter(d => d.key !== "")
-                .map(d => {
-                return {
-                  name: d.key,
-                  data: d.values,
-                  type: "line"
-                }
-              })
-            }}
-          />
-          <ReactEcharts
-            option={{
-              tooltip: {
-                trigger: 'axis',
-                axisPointer: {
-                  animation: false
-                }
-              },
-              legend: {
-                data: ["check", "check1", "check"],/*this.state.nestedData
-                  .filter(d => d.key !== "")
-                  .map(d => d.key),*/
-                left: 10
-              },
-              xAxis: {
-                type: "category",
-                data: this.state.timeRange
-              },
-              yAxis: {
-                type: "value"
-              },
-              series: this.state.nestedPercentData
-                .filter(d => d.key !== "")
-                .map(d => {
-                return {
-                  name: d.key,
-                  data: d.values,
-                  type: "line"
-                }
-              })
-            }}
-          />
-          <ReactEcharts
-            option={{
-
-              baseOption: {
-                  timeline: {
-                      //loop: false,
-                      axisType: 'category',
-                      show: true,
-                      autoPlay: true,
-                      playInterval: 300,
-                      data: this.state.timeRange
-                  },
-                  grid: {containLabel: true},
-                  xAxis: [{
-                      type: 'value',
-                      name: '%',
-                      max: 6
-                  },],
-                  yAxis: [{
-                      type: 'category',
-                      inverse: true,
-                  }],
-                  series: [
-                      {
-                          type: 'bar',
-
-                      },
-                  ]
-              },
-              options:
-                this.state.timeRange.map((time, time_i) => {
-                  return {
-                    yAxis: [{
-                          data: this.state.nestedPercentData
-                                  .filter(d => d.key !== "")
-                                  .map(d => d.key)
-                      }],
-                      title: {
-                          text: time
-                      },
-                      series: [
-                          {
-                              data: this.state.nestedPercentData
-                                      .filter(d => d.key !== "")
-                                      .map(d => d.values[time_i])
-                          },
-                      ]
-                  }
-                })
-            }}
-          />
-          <Slider
-            value={this.state.slider}
-            onChange={this.handleSliderChange}
-            onChangeCommitted={this.handleSliderCommitted}
-            valueLabelDisplay="auto"
-            aria-labelledby="range-slider"
-            //getAriaValueText="check"
-          />
-          <div>
-            <Button
-              variant="contained"
-              onClick={this.handleNestDataClick}>
-              Nest Data
-            </Button>
-            <div>
-              {JSON.stringify(this.state.nestedData)}
-            </div>
-            <div>
-              {JSON.stringify(this.state.nestedAllTags)}
-            </div>
-            <div>
-              {JSON.stringify(this.state.nestedAllTagsDates)}
-            </div>
-          </div>
-        </div>
-
+      charts = <Charts
+        externalToolTip={this.state.externalToolTip}
+        timeRange={this.state.timeRange}
+        nestedData={this.state.nestedData}
+        nestedAllTags={this.state.nestedAllTags}
+        nestedAllTagsDates={this.state.nestedAllTagsDates}
+        timeRange={this.state.timeRange}
+        nestedPercentData={this.state.nestedPercentData}
+        slider={this.state.slider}
+        handleSliderChange={this.handleSliderChangeo}
+        handleSliderCommitted={this.handleSliderCommitted}
+        handleNestDataClick={this.handleNestDataClick}
+        handleExternalToolTip={this.handleExternalToolTip}
+      />
     }
 
     return (

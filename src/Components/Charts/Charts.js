@@ -1,18 +1,18 @@
 import React from 'react'
+import ReactEcharts from "echarts-for-react";
+import Slider from '@material-ui/core/Slider';
+import Button from '@material-ui/core/Button';
 
 const charts = (props) => {
     return (
         <div>
-          <div>{this.state.externalToolTip}</div>
+          <div>{props.externalToolTip}</div>
           <ReactEcharts
             option={{
               tooltip: {
                 trigger: 'axis',
                 formatter: (params => {
-                  //console.log("params: ", params);
-                  this.setState({
-                    externalToolTip: "Data index: " + params[0].dataIndex
-                  })
+                  () => props.handleExternalToolTip("Data index: " + params[0].dataIndex)
                 }),
                 axisPointer: {
                   animation: false
@@ -26,12 +26,12 @@ const charts = (props) => {
               },
               xAxis: {
                 type: "category",
-                data: this.state.timeRange
+                data: props.timeRange
               },
               yAxis: {
                 type: "value"
               },
-              series: this.state.nestedData
+              series: props.nestedData
                 .filter(d => d.key !== "")
                 .map(d => {
                 return {
@@ -58,12 +58,12 @@ const charts = (props) => {
               },
               xAxis: {
                 type: "category",
-                data: this.state.timeRange
+                data: props.timeRange
               },
               yAxis: {
                 type: "value"
               },
-              series: this.state.nestedPercentData
+              series: props.nestedPercentData
                 .filter(d => d.key !== "")
                 .map(d => {
                 return {
@@ -84,7 +84,7 @@ const charts = (props) => {
                       show: true,
                       autoPlay: true,
                       playInterval: 300,
-                      data: this.state.timeRange
+                      data: props.timeRange
                   },
                   grid: {containLabel: true},
                   xAxis: [{
@@ -104,10 +104,10 @@ const charts = (props) => {
                   ]
               },
               options:
-                this.state.timeRange.map((time, time_i) => {
+                props.timeRange.map((time, time_i) => {
                   return {
                     yAxis: [{
-                          data: this.state.nestedPercentData
+                          data: props.nestedPercentData
                                   .filter(d => d.key !== "")
                                   .map(d => d.key)
                       }],
@@ -116,7 +116,7 @@ const charts = (props) => {
                       },
                       series: [
                           {
-                              data: this.state.nestedPercentData
+                              data: props.nestedPercentData
                                       .filter(d => d.key !== "")
                                       .map(d => d.values[time_i])
                           },
@@ -126,9 +126,9 @@ const charts = (props) => {
             }}
           />
           <Slider
-            value={this.state.slider}
-            onChange={this.handleSliderChange}
-            onChangeCommitted={this.handleSliderCommitted}
+            value={props.slider}
+            onChange={props.handleSliderChange}
+            onChangeCommitted={props.handleSliderCommitted}
             valueLabelDisplay="auto"
             aria-labelledby="range-slider"
             //getAriaValueText="check"
@@ -136,17 +136,17 @@ const charts = (props) => {
           <div>
             <Button
               variant="contained"
-              onClick={this.handleNestDataClick}>
+              onClick={props.handleNestDataClick}>
               Nest Data
             </Button>
             <div>
-              {JSON.stringify(this.state.nestedData)}
+              {JSON.stringify(props.nestedData)}
             </div>
             <div>
-              {JSON.stringify(this.state.nestedAllTags)}
+              {JSON.stringify(props.nestedAllTags)}
             </div>
             <div>
-              {JSON.stringify(this.state.nestedAllTagsDates)}
+              {JSON.stringify(props.nestedAllTagsDates)}
             </div>
           </div>
         </div>
