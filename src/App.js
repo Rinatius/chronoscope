@@ -116,7 +116,7 @@ class App extends Component {
     if (this.state.tag.length > 0) {
       result = data.filter(d => {
         const res = !(d.get("tags").includes(this.state.tag) ||
-        d.get("negtags".includes(this.state.negtag)))
+        d.get("negtags").includes(this.state.tag))
         console.log(res)
         return res
       })
