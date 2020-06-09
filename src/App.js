@@ -4,11 +4,6 @@ import './App.css';
 import { text, csv, tsv, scaleTime, extent, nest, timeFormat, sum, timeDays, range } from 'd3';
 import Slider from '@material-ui/core/Slider';
 import Button from '@material-ui/core/Button';
-import TextField from '@material-ui/core/TextField';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormGroup from '@material-ui/core/FormGroup';
-import Switch from '@material-ui/core/Switch';
-
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -16,25 +11,21 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
-
 import BigTable from "./BigTable/BigTable";
-
 import { CSVDownload } from "react-csv";
-
 import ReactEcharts from "echarts-for-react";
-
 import {createConditionalNode, mean} from "mathjs";
-
 import { fromArrayBuffer } from "numpy-parser";
+import DownloadData from './Components/DownloadData/DownloadData'
+import FilterData from './Components/FilterData/FilterData'
+import Centroid from './Components/Centroid/Centroid'
+import TagData from './Components/TagData/TagData'
+
 
 const { List, Set, Map } = require('immutable');
-
 const createKDTree = require('static-kdtree');
-
 const ndarray = require("ndarray")
-
 const pool = require("ndarray-scratch")
-
 const ops = require("ndarray-ops")
 
 
@@ -63,7 +54,8 @@ class App extends Component {
     nestedAllTagsDates: {},
     timeRange: [],
     externalToolTip: "",
-    tagModeEnabled: false
+    tagModeEnabled: false,
+    showCharts: false
   }
 
   handleSliderChange = (event, newValue) => {
@@ -107,8 +99,6 @@ class App extends Component {
           this.setState({embeddings: embeddings})
         });*/
     }
-
-
   }
 
   excludeTagNegtag = (data) => {
@@ -117,7 +107,6 @@ class App extends Component {
       result = data.filter(d => {
         const res = !(d.get("tags").includes(this.state.tag) ||
         d.get("negtags".includes(this.state.negtag)))
-        console.log(res)
         return res
       })
     }
@@ -194,18 +183,13 @@ class App extends Component {
 
     //Select time unit
     let day = timeFormat("%U");//timeFormat("%Y-%m-%d");
-
     //Determine data time extent given time unit
     let dataExtent = extent(data, d => day(d.date));
-
     let timeRange = range(dataExtent[0], dataExtent[1]);
-
     let nestedAllTagsDates = nest().key(d => day(d.date))
                        .rollup(values => sum(values, d => +1))
                        .map(flatData);
-
     let nestedAllTags = timeRange.map(d => nestedAllTagsDates.get(d) || 0)
-
     let nested = nest().key(d => d.tags)
                        .key(d => day(d.date))
                        .rollup(values => sum(values, d => +1))
@@ -346,6 +330,12 @@ class App extends Component {
     this.kdSearch();
   };
 
+  handleShowCharts = () => {
+    const charts = this.state.showCharts
+    console.log(charts)
+    this.setState({showCharts: !charts}) 
+  }
+
   componentDidUpdate(prevProps, prevState) {
     // Don't forget to compare states
     if (prevState && prevState.prepareDownload) {
@@ -362,233 +352,197 @@ class App extends Component {
                      separator={"\t"}
                      target="_blank" />);
     }
+    let charts = null;
+    if (this.state.showCharts) {
+      charts = 
+        <div>
+          <div>{this.state.externalToolTip}</div>
+          <ReactEcharts
+            option={{
+              tooltip: {
+                trigger: 'axis',
+                formatter: (params => {
+                  //console.log("params: ", params);
+                  this.setState({
+                    externalToolTip: "Data index: " + params[0].dataIndex
+                  })
+                }),
+                axisPointer: {
+                  animation: false
+                }
+              },
+              legend: {
+                data: ["check", "check1", "check"],/*this.state.nestedData
+                  .filter(d => d.key !== "")
+                  .map(d => d.key),*/
+                left: 10
+              },
+              xAxis: {
+                type: "category",
+                data: this.state.timeRange
+              },
+              yAxis: {
+                type: "value"
+              },
+              series: this.state.nestedData
+                .filter(d => d.key !== "")
+                .map(d => {
+                return {
+                  name: d.key,
+                  data: d.values,
+                  type: "line"
+                }
+              })
+            }}
+          />
+          <ReactEcharts
+            option={{
+              tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                  animation: false
+                }
+              },
+              legend: {
+                data: ["check", "check1", "check"],/*this.state.nestedData
+                  .filter(d => d.key !== "")
+                  .map(d => d.key),*/
+                left: 10
+              },
+              xAxis: {
+                type: "category",
+                data: this.state.timeRange
+              },
+              yAxis: {
+                type: "value"
+              },
+              series: this.state.nestedPercentData
+                .filter(d => d.key !== "")
+                .map(d => {
+                return {
+                  name: d.key,
+                  data: d.values,
+                  type: "line"
+                }
+              })
+            }}
+          />
+          <ReactEcharts
+            option={{
+
+              baseOption: {
+                  timeline: {
+                      //loop: false,
+                      axisType: 'category',
+                      show: true,
+                      autoPlay: true,
+                      playInterval: 300,
+                      data: this.state.timeRange
+                  },
+                  grid: {containLabel: true},
+                  xAxis: [{
+                      type: 'value',
+                      name: '%',
+                      max: 6
+                  },],
+                  yAxis: [{
+                      type: 'category',
+                      inverse: true,
+                  }],
+                  series: [
+                      {
+                          type: 'bar',
+
+                      },
+                  ]
+              },
+              options:
+                this.state.timeRange.map((time, time_i) => {
+                  return {
+                    yAxis: [{
+                          data: this.state.nestedPercentData
+                                  .filter(d => d.key !== "")
+                                  .map(d => d.key)
+                      }],
+                      title: {
+                          text: time
+                      },
+                      series: [
+                          {
+                              data: this.state.nestedPercentData
+                                      .filter(d => d.key !== "")
+                                      .map(d => d.values[time_i])
+                          },
+                      ]
+                  }
+                })
+            }}
+          />
+          <Slider
+            value={this.state.slider}
+            onChange={this.handleSliderChange}
+            onChangeCommitted={this.handleSliderCommitted}
+            valueLabelDisplay="auto"
+            aria-labelledby="range-slider"
+            //getAriaValueText="check"
+          />
+          <div>
+            <Button
+              variant="contained"
+              onClick={this.handleNestDataClick}>
+              Nest Data
+            </Button>
+            <div>
+              {JSON.stringify(this.state.nestedData)}
+            </div>
+            <div>
+              {JSON.stringify(this.state.nestedAllTags)}
+            </div>
+            <div>
+              {JSON.stringify(this.state.nestedAllTagsDates)}
+            </div>
+          </div>
+        </div>
+
+    }
+
     return (
       <div className="App">
-        <div>
-          <TextField
-            id="tsv_address"
-            label="TSV Address"
-            onChange={this.handleDataUrlChange}
-            value={this.state.data_url} />
-            <TextField
-            id="embeddings_address"
-            label="Embeddings Address"
-            onChange={this.handleEmbedsUrlChange}
-            value={this.state.embeds_url} />
-          <Button
-            variant="contained"
-            onClick={this.handleDownloadDataClick}>
-            Download data
-          </Button>
-        </div>
-        <TextField
-          id="regex_field"
-          label="RegEx Pattern"
-          onChange={this.handleRegexTextChange}
-          value={this.state.regex} />
-        <TextField
-          id="tag_selector_field"
-          label="Tags"
-          onChange={this.handleTagSelectorTextChange}
-          value={this.state.tagSelector} />
+        <DownloadData 
+          data_url={this.state.data_url}
+          embeds_url={this.state.embeds_url}
+          handleDataUrlChange={this.handleDataUrlChange}
+          handleEmbedsUrlChange={this.handleEmbedsUrlChange}
+          handleDownloadDataClick={this.handleDownloadDataClick}/>
+        <FilterData
+          reges={this.state.regex}
+          tagSelector={this.state.tagSelector}
+          handleRegexTextChange={this.handleRegexTextChange}
+          handleTagSelectorTextChange={this.handleTagSelectorTextChange}
+          handleFilterClick={this.handleFilterClick}/>
+        <Centroid
+          maxKDRadius={this.state.maxKDRadius}
+          handleCalculateCentroidClick={this.handleCalculateCentroidClick}
+          handleRadiusChange={this.handleRadiusChange}
+          handleNNSearchClick={this.handleNNSearchClick}/> 
+        <TagData
+          tagModeEnabled={this.state.tagModeEnabled}
+          tag={this.state.tag}
+          handleTagTextChange={this.handleTagTextChange}
+          handleTagClick={this.handleTagClick}
+          handleTagModeChange={this.handleTagModeChange}/>
         <Button
           variant="contained"
-          onClick={this.handleFilterClick}>
-          Filter
+          onClick={this.handleGetDataClick}>
+          Download Modified Data
         </Button>
-        <Button
-          variant="contained"
-          onClick={this.handleCalculateCentroidClick}>
-          Calculate Centroid
-        </Button>
-         <div>
-          <TextField
-            id="tag_field"
-            label="Radius around centroid"
-            type="number"
-            onChange={this.handleRadiusChange}
-            value={this.state.maxKDRadius} />
-          <Button
-            variant="contained"
-            onClick={this.handleNNSearchClick}>
-            Search around current centroid
-          </Button>
-        </div>
-        <div>
-          <TextField
-            id="tag_field"
-            label="Tag"
-            onChange={this.handleTagTextChange}
-            value={this.state.tag} />
-          <Button
-            variant="contained"
-            onClick={this.handleTagClick}>
-            Tag
-          </Button>
-          <FormControlLabel
-            control={<Switch checked={this.state.tagModeEnabled}
-                             onChange={this.handleTagModeChange}/>}
-            label="Exclude tag and negtag"
-          />
-        </div>
-        <div>
-          <Button
-            variant="contained"
-            onClick={this.handleGetDataClick}>
-            Download Modified Data
-          </Button>
-          {exportDownload}
-        </div>
+        {exportDownload}
         {/*<CSVLink data={this.state.data.toJS()} separator={"\t"}>
           Download me
         </CSVLink>*/}
         {/*<ChartWrapper />*/}
-        <div>{this.state.externalToolTip}</div>
-        <ReactEcharts
-          option={{
-            tooltip: {
-              trigger: 'axis',
-              formatter: (params => {
-                //console.log("params: ", params);
-                this.setState({
-                  externalToolTip: "Data index: " + params[0].dataIndex
-                })
-              }),
-              axisPointer: {
-                animation: false
-              }
-            },
-            legend: {
-              data: ["check", "check1", "check"],/*this.state.nestedData
-                .filter(d => d.key !== "")
-                .map(d => d.key),*/
-              left: 10
-            },
-            xAxis: {
-              type: "category",
-              data: this.state.timeRange
-            },
-            yAxis: {
-              type: "value"
-            },
-            series: this.state.nestedData
-              .filter(d => d.key !== "")
-              .map(d => {
-              return {
-                name: d.key,
-                data: d.values,
-                type: "line"
-              }
-            })
-          }}
-        />
-        <ReactEcharts
-          option={{
-            tooltip: {
-              trigger: 'axis',
-              axisPointer: {
-                animation: false
-              }
-            },
-            legend: {
-              data: ["check", "check1", "check"],/*this.state.nestedData
-                .filter(d => d.key !== "")
-                .map(d => d.key),*/
-              left: 10
-            },
-            xAxis: {
-              type: "category",
-              data: this.state.timeRange
-            },
-            yAxis: {
-              type: "value"
-            },
-            series: this.state.nestedPercentData
-              .filter(d => d.key !== "")
-              .map(d => {
-              return {
-                name: d.key,
-                data: d.values,
-                type: "line"
-              }
-            })
-          }}
-        />
-        <ReactEcharts
-          option={{
-
-            baseOption: {
-                timeline: {
-                    //loop: false,
-                    axisType: 'category',
-                    show: true,
-                    autoPlay: true,
-                    playInterval: 300,
-                    data: this.state.timeRange
-                },
-                grid: {containLabel: true},
-                xAxis: [{
-                    type: 'value',
-                    name: '%',
-                    max: 6
-                },],
-                yAxis: [{
-                    type: 'category',
-                    inverse: true,
-                }],
-                series: [
-                    {
-                        type: 'bar',
-
-                    },
-                ]
-            },
-            options:
-              this.state.timeRange.map((time, time_i) => {
-                return {
-                  yAxis: [{
-                        data: this.state.nestedPercentData
-                                .filter(d => d.key !== "")
-                                .map(d => d.key)
-                    }],
-                    title: {
-                        text: time
-                    },
-                    series: [
-                        {
-                            data: this.state.nestedPercentData
-                                    .filter(d => d.key !== "")
-                                    .map(d => d.values[time_i])
-                        },
-                    ]
-                }
-              })
-          }}
-        />
-        <Slider
-          value={this.state.slider}
-          onChange={this.handleSliderChange}
-          onChangeCommitted={this.handleSliderCommitted}
-          valueLabelDisplay="auto"
-          aria-labelledby="range-slider"
-          //getAriaValueText="check"
-        />
-        <div>
-          <Button
-            variant="contained"
-            onClick={this.handleNestDataClick}>
-            Nest Data
-          </Button>
-          <div>
-            {JSON.stringify(this.state.nestedData)}
-          </div>
-          <div>
-            {JSON.stringify(this.state.nestedAllTags)}
-          </div>
-          <div>
-            {JSON.stringify(this.state.nestedAllTagsDates)}
-          </div>
-        </div>
+        <Button onClick={this.handleShowCharts}>Show charts</Button>
+        {charts}
         <BigTable bigArray={this.state.filteredData}>
           <TableContainer component={Paper}>
             <Table aria-label="simple table">
