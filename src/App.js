@@ -5,6 +5,9 @@ import { text, csv, tsv, scaleTime, extent, nest, timeFormat, sum, timeDays, ran
 import Slider from '@material-ui/core/Slider';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormGroup from '@material-ui/core/FormGroup';
+import Switch from '@material-ui/core/Switch';
 
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -50,7 +53,7 @@ class App extends Component {
     embeddings: [],
     kdTree: null,
     centroid: [],
-    maxPoints: 5,
+    maxKDRadius: 0.1,
     tag: "",
     tagSelector: "",
     prepareDownload: false,
@@ -59,7 +62,8 @@ class App extends Component {
     nestedAllTags: [],
     nestedAllTagsDates: {},
     timeRange: [],
-    externalToolTip: ""
+    externalToolTip: "",
+    tagModeEnabled: false
   }
 
   handleSliderChange = (event, newValue) => {
@@ -107,6 +111,20 @@ class App extends Component {
 
   }
 
+  excludeTagNegtag = (data) => {
+    let result = data
+    if (this.state.tag.length > 0) {
+      result = data.filter(d => {
+        const res = !(d.get("tags").includes(this.state.tag) ||
+        d.get("negtags".includes(this.state.negtag)))
+        console.log(res)
+        return res
+      })
+    }
+    console.log(result)
+    return result
+  }
+
   allFilter = () => {
     let filtered = []
     if (this.state.regex.length > 0) {
@@ -117,6 +135,9 @@ class App extends Component {
     }
     if (this.state.tagSelector.length > 0) {
       filtered = filtered.filter(d => d.get("tags").includes(this.state.tagSelector));
+    }
+    if (this.state.tagModeEnabled) {
+      filtered = this.excludeTagNegtag(filtered)
     }
     this.setState({
       filteredData: filtered
@@ -212,9 +233,17 @@ class App extends Component {
   }
 
   kdSearch = () => {
-    const nearestPoints = this.state.kdTree
-      .knn(this.state.centroid.data, 5)
-    const nearestRows = List(nearestPoints.map(d => this.state.data.get(d)));
+    const nearestPoints = []
+    this.state.kdTree
+      .rnn(this.state.centroid.data, this.state.maxKDRadius, point => {
+        nearestPoints.push(point)
+        return undefined;
+      })
+    console.log(nearestPoints)
+    let nearestRows = List(nearestPoints.map(d => this.state.data.get(d)));
+    if (this.state.tagModeEnabled) {
+      nearestRows = this.excludeTagNegtag(nearestRows)
+    }
     this.setState({filteredData: nearestRows})
   }
 
@@ -301,9 +330,15 @@ class App extends Component {
     this.downloadData()
   };
 
-  handleMaxPointsChange = (event) => {
+  handleRadiusChange = (event) => {
     this.setState({
-      maxPoints: event.target.value
+      maxKDRadius: event.target.value
+    });
+  };
+
+  handleTagModeChange = (event) => {
+    this.setState({
+      tagModeEnabled: event.target.checked
     });
   };
 
@@ -369,14 +404,14 @@ class App extends Component {
          <div>
           <TextField
             id="tag_field"
-            label="Maximum points around centroid"
+            label="Radius around centroid"
             type="number"
-            onChange={this.handleMaxPointsChange}
-            value={this.state.maxPoints} />
+            onChange={this.handleRadiusChange}
+            value={this.state.maxKDRadius} />
           <Button
             variant="contained"
             onClick={this.handleNNSearchClick}>
-            NN-search around current centroid
+            Search around current centroid
           </Button>
         </div>
         <div>
@@ -390,6 +425,11 @@ class App extends Component {
             onClick={this.handleTagClick}>
             Tag
           </Button>
+          <FormControlLabel
+            control={<Switch checked={this.state.tagModeEnabled}
+                             onChange={this.handleTagModeChange}/>}
+            label="Exclude tag and negtag"
+          />
         </div>
         <div>
           <Button
