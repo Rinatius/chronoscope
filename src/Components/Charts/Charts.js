@@ -139,6 +139,11 @@ const charts = (props) => {
               onClick={props.handleNestDataClick}>
               Nest Data
             </Button>
+            <Button 
+              variant='contained'
+              onClick={props.handleTSNEClick}>
+              t-SNE
+            </Button>
             <div>
               {JSON.stringify(props.nestedData)}
             </div>

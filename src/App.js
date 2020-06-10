@@ -19,6 +19,7 @@ import FilterData from './Components/FilterData/FilterData'
 import Centroid from './Components/Centroid/Centroid'
 import TagData from './Components/TagData/TagData'
 import Charts from './Components/Charts/Charts'
+import * as tsnejs from '@jwalsh/tsnejs';
 
 
 const { List, Set, Map } = require('immutable');
@@ -26,6 +27,7 @@ const createKDTree = require('static-kdtree');
 const ndarray = require("ndarray")
 const pool = require("ndarray-scratch")
 const ops = require("ndarray-ops")
+const unpack = require('ndarray-unpack')
 
 
 
@@ -34,7 +36,6 @@ class App extends Component {
   state = {
     slider: [0, 100],
     data_url: "https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/nuk%2BQ2%2Bs.csv?alt=media&token=187d3eda-38d9-4d6b-be2e-c35ed91be3fa",
-    regex: "",
     data: List([]),
     filteredData: List([]),
     exclude: List([]),
@@ -314,6 +315,24 @@ class App extends Component {
     this.downloadData()
   };
 
+  handleTSNEClick = () => {
+    let opt = {}
+    opt.epsilon = 10; // epsilon is learning rate (10 = default)
+    opt.perplexity = 30; // roughly how many neighbors each point influences (30 = default)
+    opt.dim = 3; // dimensionality of the embedding (2 = default)
+
+    let tsne = new tsnejs.tSNE(opt); // create a tSNE instance
+    tsne.initDataDist(unpack(this.state.embeddings));
+
+    for(let k = 0; k < 10; k++) {
+      console.log(k);
+      tsne.step(); // every time you call this, solution gets better
+    }
+
+    const Y = tsne.getSolution(); // Y is an array of 2-D points that you can plot
+    console.log(Y);
+  }
+
   handleRadiusChange = (event) => {
     this.setState({
       maxKDRadius: event.target.value
@@ -371,6 +390,7 @@ class App extends Component {
         handleSliderCommitted={this.handleSliderCommitted}
         handleNestDataClick={this.handleNestDataClick}
         handleExternalToolTip={this.handleExternalToolTip}
+        handleTSNEClick={this.handleTSNEClick}
       />
     }
 
