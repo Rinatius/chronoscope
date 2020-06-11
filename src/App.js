@@ -55,7 +55,8 @@ class App extends Component {
     timeRange: [],
     externalToolTip: "",
     tagModeEnabled: false,
-    showCharts: false
+    showCharts: false,
+    scatter3dData: []
   }
 
   handleSliderChange = (event, newValue) => {
@@ -322,15 +323,14 @@ class App extends Component {
     opt.dim = 3; // dimensionality of the embedding (2 = default)
 
     let tsne = new tsnejs.tSNE(opt); // create a tSNE instance
-    tsne.initDataDist(unpack(this.state.embeddings));
-
-    for(let k = 0; k < 10; k++) {
+    tsne.initDataRaw(unpack(this.state.embeddings));
+    for(let k = 0; k < 3; k++) {
       console.log(k);
       tsne.step(); // every time you call this, solution gets better
     }
+      const Y = tsne.getSolution(); // Y is an array of 2-D points that you can plot
+      this.setState({scatter3dData: Y})
 
-    const Y = tsne.getSolution(); // Y is an array of 2-D points that you can plot
-    console.log(Y);
   }
 
   handleRadiusChange = (event) => {
@@ -391,6 +391,7 @@ class App extends Component {
         handleNestDataClick={this.handleNestDataClick}
         handleExternalToolTip={this.handleExternalToolTip}
         handleTSNEClick={this.handleTSNEClick}
+        scatter3dData={this.state.scatter3dData}
       />
     }
 

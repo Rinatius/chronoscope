@@ -2,6 +2,7 @@ import React from 'react'
 import ReactEcharts from "echarts-for-react";
 import Slider from '@material-ui/core/Slider';
 import Button from '@material-ui/core/Button';
+import Scatter3d from './Scatter3d'
 
 const charts = (props) => {
     return (
@@ -125,6 +126,7 @@ const charts = (props) => {
                 })
             }}
           />
+          <Scatter3d data={props.scatter3dData}/>
           <Slider
             value={props.slider}
             onChange={props.handleSliderChange}
