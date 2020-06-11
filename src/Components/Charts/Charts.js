@@ -3,11 +3,22 @@ import ReactEcharts from "echarts-for-react";
 import Slider from '@material-ui/core/Slider';
 import Button from '@material-ui/core/Button';
 import Scatter3d from './Scatter3d'
+import styles from './Charts.module.css'
 
 const charts = (props) => {
     return (
         <div>
           <div>{props.externalToolTip}</div>
+          <Scatter3d 
+            className={styles.Scatter3d}
+            data={props.scatter3dData}
+            status={props.scatter3dStatus}/>
+          <Button 
+            className={styles.TSNEButton}
+            variant='contained'
+            onClick={props.handleTSNEClick}>
+            t-SNE
+          </Button>
           <ReactEcharts
             option={{
               tooltip: {
@@ -126,8 +137,7 @@ const charts = (props) => {
                 })
             }}
           />
-          <Scatter3d data={props.scatter3dData}/>
-          <Slider
+         <Slider
             value={props.slider}
             onChange={props.handleSliderChange}
             onChangeCommitted={props.handleSliderCommitted}
@@ -141,12 +151,7 @@ const charts = (props) => {
               onClick={props.handleNestDataClick}>
               Nest Data
             </Button>
-            <Button 
-              variant='contained'
-              onClick={props.handleTSNEClick}>
-              t-SNE
-            </Button>
-            <div>
+           <div>
               {JSON.stringify(props.nestedData)}
             </div>
             <div>

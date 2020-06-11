@@ -55,8 +55,9 @@ class App extends Component {
     timeRange: [],
     externalToolTip: "",
     tagModeEnabled: false,
-    showCharts: false,
-    scatter3dData: []
+    showCharts: true,
+    scatter3dData: [],
+    scatter3dStatus: ''
   }
 
   handleSliderChange = (event, newValue) => {
@@ -249,6 +250,32 @@ class App extends Component {
     });
   };
 
+  runTSNE = () => {
+    const opt = {}
+    opt.epsilon = 10; // epsilon is learning rate (10 = default)
+    opt.perplexity = 30; // roughly how many neighbors each point influences (30 = default)
+    opt.dim = 3; // dimensionality of the embedding (2 = default)
+
+    let tsnePromise = new Promise((resolve, reject) => {
+      this.setState({scatter3dStatus: 'Initializing t-SNE...'});
+      console.log('Initializing t-SNE...')
+      const tsne = new tsnejs.tSNE(opt); // create a tSNE instance
+      tsne.initDataRaw(unpack(this.state.embeddings));
+      // tsne.initDataDist([[1.0, 0.1, 0.2], [0.1, 1.0, 0.3], [0.2, 0.1, 1.0]])
+      this.setState({scatter3dStatus: 't-SNE is ready'});
+      console.log('t-SNE is ready')
+      resolve(tsne)
+    })
+    tsnePromise.then(tsne => {
+      for(let k = 0; k < 3; k++) {
+        this.setState({scatter3dStatus: 'Iter: ' + k});
+        console.log('Iter: ' + k)
+        tsne.step(); // every time you call this, solution gets better
+        this.setState({scatter3dData: tsne.getSolution()})
+      } 
+    })
+  }
+
   handleSliderCommitted = (event, newValue) => {
     if(this.state.data.length > 0){
     this.setState({
@@ -317,20 +344,7 @@ class App extends Component {
   };
 
   handleTSNEClick = () => {
-    let opt = {}
-    opt.epsilon = 10; // epsilon is learning rate (10 = default)
-    opt.perplexity = 30; // roughly how many neighbors each point influences (30 = default)
-    opt.dim = 3; // dimensionality of the embedding (2 = default)
-
-    let tsne = new tsnejs.tSNE(opt); // create a tSNE instance
-    tsne.initDataRaw(unpack(this.state.embeddings));
-    for(let k = 0; k < 3; k++) {
-      console.log(k);
-      tsne.step(); // every time you call this, solution gets better
-    }
-      const Y = tsne.getSolution(); // Y is an array of 2-D points that you can plot
-      this.setState({scatter3dData: Y})
-
+    this.runTSNE()
   }
 
   handleRadiusChange = (event) => {
@@ -351,7 +365,6 @@ class App extends Component {
 
   handleShowCharts = () => {
     const charts = this.state.showCharts
-    console.log(charts)
     this.setState({showCharts: !charts})
   }
 
@@ -392,6 +405,7 @@ class App extends Component {
         handleExternalToolTip={this.handleExternalToolTip}
         handleTSNEClick={this.handleTSNEClick}
         scatter3dData={this.state.scatter3dData}
+        scatter3dStatus={this.state.scatter3dStatus}
       />
     }
 

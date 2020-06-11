@@ -19,11 +19,9 @@ const scatter3d = (props) => {
     });
 
     return (
-        <div className='examples'>
-        <div className='parent'>
-            <label>echarts-gl demo</label>
+        <div>
+            <label>{props.status}</label>
             <ReactEcharts option={getOption()}  />
-        </div>
         </div>
     );
 }
