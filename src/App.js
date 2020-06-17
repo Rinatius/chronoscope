@@ -1,7 +1,18 @@
 import React, { Component } from 'react';
 import ChartWrapper from './ChartWrapper/ChartWrapper';
 import './App.css';
-import { text, csv, tsv, scaleTime, extent, nest, timeFormat, sum, timeDays, range } from 'd3';
+import {
+  text,
+  csv,
+  tsv,
+  scaleTime,
+  extent,
+  nest,
+  timeFormat,
+  sum,
+  timeDays,
+  range
+} from 'd3';
 import Button from '@material-ui/core/Button';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -10,55 +21,53 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
-import BigTable from "./BigTable/BigTable";
-import { CSVDownload } from "react-csv";
-import {createConditionalNode, mean} from "mathjs";
-import { fromArrayBuffer } from "numpy-parser";
-import DownloadData from './Components/DownloadData/DownloadData'
-import FilterData from './Components/FilterData/FilterData'
-import Centroid from './Components/Centroid/Centroid'
-import TagData from './Components/TagData/TagData'
-import Charts from './Components/Charts/Charts'
+import BigTable from './BigTable/BigTable';
+import { CSVDownload } from 'react-csv';
+import { createConditionalNode, mean } from 'mathjs';
+import { fromArrayBuffer } from 'numpy-parser';
+import DownloadData from './Components/DownloadData/DownloadData';
+import FilterData from './Components/FilterData/FilterData';
+import Centroid from './Components/Centroid/Centroid';
+import TagData from './Components/TagData/TagData';
+import Charts from './Components/Charts/Charts';
 import * as tsnejs from '@jwalsh/tsnejs';
-
 
 const { List, Set, Map } = require('immutable');
 const createKDTree = require('static-kdtree');
-const ndarray = require("ndarray")
-const pool = require("ndarray-scratch")
-const ops = require("ndarray-ops")
-const unpack = require('ndarray-unpack')
-
-
+const ndarray = require('ndarray');
+const pool = require('ndarray-scratch');
+const ops = require('ndarray-ops');
+const unpack = require('ndarray-unpack');
 
 class App extends Component {
-
   state = {
     slider: [0, 100],
-    data_url: "https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/nuk%2BQ2%2Bs.csv?alt=media&token=187d3eda-38d9-4d6b-be2e-c35ed91be3fa",
+    data_url:
+      'https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/nuk%2BQ2%2Bs.csv?alt=media&token=187d3eda-38d9-4d6b-be2e-c35ed91be3fa',
     data: List([]),
     filteredData: List([]),
     exclude: List([]),
     timeFilteredData: List([]),
-    embeds_url: "https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/comments_embeddings.npy?alt=media&token=87cd348c-f954-49b9-8731-689421435d8b",
+    embeds_url:
+      'https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/comments_embeddings.npy?alt=media&token=87cd348c-f954-49b9-8731-689421435d8b',
     embeddings: [],
     kdTree: null,
     centroid: [],
     maxKDRadius: 0.1,
-    tag: "",
-    tagSelector: "",
+    tag: '',
+    tagSelector: '',
     prepareDownload: false,
-    nestedData: [{values: []}],
-    nestedPercentData: [{values: []}],
+    nestedData: [{ values: [] }],
+    nestedPercentData: [{ values: [] }],
     nestedAllTags: [],
     nestedAllTagsDates: {},
     timeRange: [],
-    externalToolTip: "",
+    externalToolTip: '',
     tagModeEnabled: false,
     showCharts: true,
     scatter3dData: [],
     scatter3dStatus: ''
-  }
+  };
 
   handleSliderChange = (event, newValue) => {
     this.setState({
@@ -72,142 +81,150 @@ class App extends Component {
         key: i,
         date: new Date(d.date),
         sentence: d.sentence,
-        tags: Set(d.tags.split(",")),
-        negtags: ("negtags" in d) ? Set(d.negtags.split(",")) : Set([])
+        tags: Set(d.tags.split(',')),
+        negtags: 'negtags' in d ? Set(d.negtags.split(',')) : Set([])
       });
     }).then(download => {
-              this.timeScale = scaleTime()
-                  .domain(extent(download, d => d.get("date").getTime()))
-                  .range([0, 100])
-              //let filtered = this.timeFilter(download, this.state.slider)
-              this.setState({data: List(download)});
+      this.timeScale = scaleTime()
+        .domain(extent(download, d => d.get('date').getTime()))
+        .range([0, 100]);
+      //let filtered = this.timeFilter(download, this.state.slider)
+      this.setState({ data: List(download) });
     });
 
-    if (this.state.embeds_url !== ""){
+    if (this.state.embeds_url !== '') {
       fetch(this.state.embeds_url)
         .then(response => response.arrayBuffer())
         .then(arrayBuffer => {
-          const data1D = fromArrayBuffer(arrayBuffer)
+          const data1D = fromArrayBuffer(arrayBuffer);
           const embeddings = ndarray(data1D.data, data1D.shape);
-          const kdTree = createKDTree(embeddings)
-          console.log(kdTree.length)
-          console.log(kdTree.dimension)
-          this.setState({kdTree: kdTree})
-          this.setState({embeddings: embeddings})
-          })
+          const kdTree = createKDTree(embeddings);
+          console.log(kdTree.length);
+          console.log(kdTree.dimension);
+          this.setState({ kdTree: kdTree });
+          this.setState({ embeddings: embeddings });
+        });
       /*text(this.state.embeds_url, "text/csv", f => csv.parseRows(f))
         .then(embeddings => {
           this.setState({kdTree: createKDTree(embeddings)})
           this.setState({embeddings: embeddings})
         });*/
     }
-  }
+  };
 
-  excludeTagNegtag = (data) => {
-    let result = data
+  excludeTagNegtag = data => {
+    let result = data;
     if (this.state.tag.length > 0) {
       result = data.filter(d => {
-        const res = !(d.get("tags").includes(this.state.tag) ||
-        d.get("negtags").includes(this.state.tag))
-        console.log(res)
-        return res
-      })
+        const res = !(
+          d.get('tags').includes(this.state.tag) ||
+          d.get('negtags').includes(this.state.tag)
+        );
+        console.log(res);
+        return res;
+      });
     }
-    console.log(result)
-    return result
-  }
+    console.log(result);
+    return result;
+  };
 
   allFilter = () => {
-    let filtered = []
+    let filtered = [];
     if (this.state.regex.length > 0) {
-      let re = new RegExp(this.state.regex, "i");
-      filtered = this.state.data.filter(d => (re.test(d.get("sentence"))));
+      let re = new RegExp(this.state.regex, 'i');
+      filtered = this.state.data.filter(d => re.test(d.get('sentence')));
     } else {
-      filtered = this.state.data
+      filtered = this.state.data;
     }
     if (this.state.tagSelector.length > 0) {
-      filtered = filtered.filter(d => d.get("tags").includes(this.state.tagSelector));
+      filtered = filtered.filter(d =>
+        d.get('tags').includes(this.state.tagSelector)
+      );
     }
     if (this.state.tagModeEnabled) {
-      filtered = this.excludeTagNegtag(filtered)
+      filtered = this.excludeTagNegtag(filtered);
     }
     this.setState({
       filteredData: filtered
-    })
+    });
   };
 
   tag = () => {
     let data = this.state.data;
     let exclude = this.state.exclude;
     let filtered = this.state.filteredData.map(row => {
-      if (!(exclude.includes(row.get("key")))) {
-        row = row.update("tags", d => d.add(this.state.tag))
-        data = data.set(row.get("key"), row)
-        return row
+      if (!exclude.includes(row.get('key'))) {
+        row = row.update('tags', d => d.add(this.state.tag));
+        data = data.set(row.get('key'), row);
+        return row;
       }
-    })
+    });
     this.setState({
       data: data,
       filteredData: filtered
-    })
-  }
+    });
+  };
 
-  removeRow = (index) => {
-    if (this.state.tag !== "") {
+  removeRow = index => {
+    if (this.state.tag !== '') {
       let data = this.state.data;
       let row = this.state.filteredData.get(index);
-      row = row.update("negtags", d => d.add(this.state.tag))
-      data = data.set(row.get("key"), row)
+      row = row.update('negtags', d => d.add(this.state.tag));
+      data = data.set(row.get('key'), row);
       this.setState({
         data: data
-      })
+      });
     }
     this.setState({
       filteredData: this.state.filteredData.delete(index)
-    })
-  }
+    });
+  };
 
   timeFilter = (data, interval) => {
-    let startTime = this.timeScale.invert(interval[0])
-    let endTime = this.timeScale.invert(interval[1])
-    return data.filter(d => (d.date.getTime() >= startTime &&
-                             d.date.getTime() <= endTime))
+    let startTime = this.timeScale.invert(interval[0]);
+    let endTime = this.timeScale.invert(interval[1]);
+    return data.filter(
+      d => d.date.getTime() >= startTime && d.date.getTime() <= endTime
+    );
   };
 
   nestData = () => {
-    let flatData = []
-    let data = this.state.data.toJS()
+    let flatData = [];
+    let data = this.state.data.toJS();
 
     //Denormalize data by tag
-    data.forEach(d => d.tags.forEach(t => {
-      d.tags = t
-      flatData.push(d)
-    }))
+    data.forEach(d =>
+      d.tags.forEach(t => {
+        d.tags = t;
+        flatData.push(d);
+      })
+    );
 
     //Select time unit
-    let day = timeFormat("%U");//timeFormat("%Y-%m-%d");
+    let day = timeFormat('%U'); //timeFormat("%Y-%m-%d");
     //Determine data time extent given time unit
     let dataExtent = extent(data, d => day(d.date));
     let timeRange = range(dataExtent[0], dataExtent[1]);
-    let nestedAllTagsDates = nest().key(d => day(d.date))
-                       .rollup(values => sum(values, d => +1))
-                       .map(flatData);
-    let nestedAllTags = timeRange.map(d => nestedAllTagsDates.get(d) || 0)
-    let nested = nest().key(d => d.tags)
-                       .key(d => day(d.date))
-                       .rollup(values => sum(values, d => +1))
-                       .map(flatData);
+    let nestedAllTagsDates = nest()
+      .key(d => day(d.date))
+      .rollup(values => sum(values, d => +1))
+      .map(flatData);
+    let nestedAllTags = timeRange.map(d => nestedAllTagsDates.get(d) || 0);
+    let nested = nest()
+      .key(d => d.tags)
+      .key(d => day(d.date))
+      .rollup(values => sum(values, d => +1))
+      .map(flatData);
 
     //let timeRange = timeDays(dataExtent[0], dataExtent[1]).map(d => day(d));
-    let zeroPadded = nested.keys()
-                           .map(d => {
-                             return {key: d,
-                                     values: timeRange.map(t => nested.get(d).get(t) || 0)}})
-    let zeroPaddedPercent = zeroPadded.map((d) => {
+    let zeroPadded = nested.keys().map(d => {
+      return { key: d, values: timeRange.map(t => nested.get(d).get(t) || 0) };
+    });
+    let zeroPaddedPercent = zeroPadded.map(d => {
       return {
         key: d.key,
-        values: d.values.map((t, i) => t/nestedAllTags[i]*100)
-      }
+        values: d.values.map((t, i) => (t / nestedAllTags[i]) * 100)
+      };
     });
 
     this.setState({
@@ -216,34 +233,38 @@ class App extends Component {
       nestedAllTags: nestedAllTags,
       nestedAllTagsDates: nestedAllTagsDates,
       timeRange: timeRange
-    })
-  }
+    });
+  };
 
   kdSearch = () => {
-    const nearestPoints = []
-    this.state.kdTree
-      .rnn(this.state.centroid.data, this.state.maxKDRadius, point => {
-        nearestPoints.push(point)
+    const nearestPoints = [];
+    this.state.kdTree.rnn(
+      this.state.centroid.data,
+      this.state.maxKDRadius,
+      point => {
+        nearestPoints.push(point);
         return undefined;
-      })
-    console.log(nearestPoints)
+      }
+    );
+    console.log(nearestPoints);
     let nearestRows = List(nearestPoints.map(d => this.state.data.get(d)));
     if (this.state.tagModeEnabled) {
-      nearestRows = this.excludeTagNegtag(nearestRows)
+      nearestRows = this.excludeTagNegtag(nearestRows);
     }
-    this.setState({filteredData: nearestRows})
-  }
+    this.setState({ filteredData: nearestRows });
+  };
 
   ndMean = (data, indices) => {
     let result = pool.zeros([data.shape[1]], data.dtype);
     indices.forEach(d => {
-      ops.addeq(result, data.pick(d))});
+      ops.addeq(result, data.pick(d));
+    });
     ops.divseq(result, indices.length);
-    return result
+    return result;
   };
 
   calculateCentroid = () => {
-    const filteredIndices = this.state.filteredData.map(d => d.get("key"));
+    const filteredIndices = this.state.filteredData.map(d => d.get('key'));
     const centroid = this.ndMean(this.state.embeddings, filteredIndices.toJS());
     this.setState({
       centroid: centroid
@@ -251,63 +272,64 @@ class App extends Component {
   };
 
   runTSNE = () => {
-    const opt = {}
+    const opt = {};
     opt.epsilon = 10; // epsilon is learning rate (10 = default)
     opt.perplexity = 30; // roughly how many neighbors each point influences (30 = default)
     opt.dim = 3; // dimensionality of the embedding (2 = default)
 
     let tsnePromise = new Promise((resolve, reject) => {
-      this.setState({scatter3dStatus: 'Initializing t-SNE...'});
-      console.log('Initializing t-SNE...')
+      this.setState({ scatter3dStatus: 'Initializing t-SNE...' });
+      console.log('Initializing t-SNE...');
       const tsne = new tsnejs.tSNE(opt); // create a tSNE instance
       tsne.initDataRaw(unpack(this.state.embeddings));
       // tsne.initDataDist([[1.0, 0.1, 0.2], [0.1, 1.0, 0.3], [0.2, 0.1, 1.0]])
-      this.setState({scatter3dStatus: 't-SNE is ready'});
-      console.log('t-SNE is ready')
-      resolve(tsne)
-    })
+      this.setState({ scatter3dStatus: 't-SNE is ready' });
+      console.log('t-SNE is ready');
+      resolve(tsne);
+    });
     tsnePromise.then(tsne => {
-      for(let k = 0; k < 3; k++) {
-        this.setState({scatter3dStatus: 'Iter: ' + k});
-        console.log('Iter: ' + k)
+      for (let k = 0; k < 3; k++) {
+        this.setState({ scatter3dStatus: 'Iter: ' + k });
+        console.log('Iter: ' + k);
         tsne.step(); // every time you call this, solution gets better
-        this.setState({scatter3dData: tsne.getSolution()})
-      } 
-    })
-  }
-
-  handleSliderCommitted = (event, newValue) => {
-    if(this.state.data.length > 0){
-    this.setState({
-      timeFilteredData: this.timeFilter(this.state.data, newValue)
-    })}
+        this.setState({ scatter3dData: tsne.getSolution() });
+      }
+    });
   };
 
-  handleDataUrlChange = (event) => {
+  handleSliderCommitted = (event, newValue) => {
+    if (this.state.data.length > 0) {
+      this.setState({
+        timeFilteredData: this.timeFilter(this.state.data, newValue)
+      });
+    }
+  };
+
+  handleDataUrlChange = event => {
     this.setState({
       data_url: event.target.value
     });
   };
 
-  handleEmbedsUrlChange = (event) => {
+  handleEmbedsUrlChange = event => {
     this.setState({
       embeds_url: event.target.value
     });
   };
 
-  handleRegexTextChange = (event) => {
+  handleRegexTextChange = event => {
     this.setState({
       regex: event.target.value
     });
   };
 
-  handleTagSelectorTextChange = (event) => {
+  handleTagSelectorTextChange = event => {
     this.setState({
       tagSelector: event.target.value
     });
   };
 
-  handleTagTextChange = (event) => {
+  handleTagTextChange = event => {
     this.setState({
       tag: event.target.value
     });
@@ -325,14 +347,14 @@ class App extends Component {
     this.tag();
   };
 
-  handleRowRemoval = (index) => {
+  handleRowRemoval = index => {
     this.removeRow(index);
   };
 
   handleGetDataClick = () => {
     this.setState({
       prepareDownload: true
-    })
+    });
   };
 
   handleNestDataClick = () => {
@@ -340,20 +362,20 @@ class App extends Component {
   };
 
   handleDownloadDataClick = () => {
-    this.downloadData()
+    this.downloadData();
   };
 
   handleTSNEClick = () => {
-    this.runTSNE()
-  }
+    this.runTSNE();
+  };
 
-  handleRadiusChange = (event) => {
+  handleRadiusChange = event => {
     this.setState({
       maxKDRadius: event.target.value
     });
   };
 
-  handleTagModeChange = (event) => {
+  handleTagModeChange = event => {
     this.setState({
       tagModeEnabled: event.target.checked
     });
@@ -364,49 +386,53 @@ class App extends Component {
   };
 
   handleShowCharts = () => {
-    const charts = this.state.showCharts
-    this.setState({showCharts: !charts})
-  }
+    const charts = this.state.showCharts;
+    this.setState({ showCharts: !charts });
+  };
 
-  handleExternalToolTip = (dataIndex) => {
-    this.setState({externalToolTip: dataIndex})
-  }
+  handleExternalToolTip = dataIndex => {
+    this.setState({ externalToolTip: dataIndex });
+  };
 
   componentDidUpdate(prevProps, prevState) {
     // Don't forget to compare states
     if (prevState && prevState.prepareDownload) {
-      this.setState({prepareDownload: false});
+      this.setState({ prepareDownload: false });
     }
-  };
+  }
 
   render() {
-
     let exportDownload = null;
     if (this.state.prepareDownload) {
       exportDownload = (
-        <CSVDownload data={this.state.data.toJS()}
-                     separator={"\t"}
-                     target="_blank" />);
+        <CSVDownload
+          data={this.state.data.toJS()}
+          separator={'\t'}
+          target="_blank"
+        />
+      );
     }
     let charts = null;
     if (this.state.showCharts) {
-      charts = <Charts
-        externalToolTip={this.state.externalToolTip}
-        timeRange={this.state.timeRange}
-        nestedData={this.state.nestedData}
-        nestedAllTags={this.state.nestedAllTags}
-        nestedAllTagsDates={this.state.nestedAllTagsDates}
-        timeRange={this.state.timeRange}
-        nestedPercentData={this.state.nestedPercentData}
-        slider={this.state.slider}
-        handleSliderChange={this.handleSliderChangeo}
-        handleSliderCommitted={this.handleSliderCommitted}
-        handleNestDataClick={this.handleNestDataClick}
-        handleExternalToolTip={this.handleExternalToolTip}
-        handleTSNEClick={this.handleTSNEClick}
-        scatter3dData={this.state.scatter3dData}
-        scatter3dStatus={this.state.scatter3dStatus}
-      />
+      charts = (
+        <Charts
+          externalToolTip={this.state.externalToolTip}
+          timeRange={this.state.timeRange}
+          nestedData={this.state.nestedData}
+          nestedAllTags={this.state.nestedAllTags}
+          nestedAllTagsDates={this.state.nestedAllTagsDates}
+          timeRange={this.state.timeRange}
+          nestedPercentData={this.state.nestedPercentData}
+          slider={this.state.slider}
+          handleSliderChange={this.handleSliderChangeo}
+          handleSliderCommitted={this.handleSliderCommitted}
+          handleNestDataClick={this.handleNestDataClick}
+          handleExternalToolTip={this.handleExternalToolTip}
+          handleTSNEClick={this.handleTSNEClick}
+          scatter3dData={this.state.scatter3dData}
+          scatter3dStatus={this.state.scatter3dStatus}
+        />
+      );
     }
 
     return (
@@ -416,27 +442,29 @@ class App extends Component {
           embeds_url={this.state.embeds_url}
           handleDataUrlChange={this.handleDataUrlChange}
           handleEmbedsUrlChange={this.handleEmbedsUrlChange}
-          handleDownloadDataClick={this.handleDownloadDataClick}/>
+          handleDownloadDataClick={this.handleDownloadDataClick}
+        />
         <FilterData
           reges={this.state.regex}
           tagSelector={this.state.tagSelector}
           handleRegexTextChange={this.handleRegexTextChange}
           handleTagSelectorTextChange={this.handleTagSelectorTextChange}
-          handleFilterClick={this.handleFilterClick}/>
+          handleFilterClick={this.handleFilterClick}
+        />
         <Centroid
           maxKDRadius={this.state.maxKDRadius}
           handleCalculateCentroidClick={this.handleCalculateCentroidClick}
           handleRadiusChange={this.handleRadiusChange}
-          handleNNSearchClick={this.handleNNSearchClick}/>
+          handleNNSearchClick={this.handleNNSearchClick}
+        />
         <TagData
           tagModeEnabled={this.state.tagModeEnabled}
           tag={this.state.tag}
           handleTagTextChange={this.handleTagTextChange}
           handleTagClick={this.handleTagClick}
-          handleTagModeChange={this.handleTagModeChange}/>
-        <Button
-          variant="contained"
-          onClick={this.handleGetDataClick}>
+          handleTagModeChange={this.handleTagModeChange}
+        />
+        <Button variant="contained" onClick={this.handleGetDataClick}>
           Download Modified Data
         </Button>
         {exportDownload}
@@ -460,16 +488,15 @@ class App extends Component {
               <TableBody>
                 {this.state.filteredData.map((row, index) => (
                   <TableRow
-                    key={row.get("key")}
+                    key={row.get('key')}
                     onClick={() => this.handleRowRemoval(index)}
                   >
-                    <TableCell align="left">{row.get("sentence")}</TableCell>
-                    <TableCell>{JSON.stringify(row.get("tags"))}</TableCell>
-                    <TableCell>{JSON.stringify(row.get("negtags"))}</TableCell>
+                    <TableCell align="left">{row.get('sentence')}</TableCell>
+                    <TableCell>{JSON.stringify(row.get('tags'))}</TableCell>
+                    <TableCell>{JSON.stringify(row.get('negtags'))}</TableCell>
                     <TableCell align="left">
-                      {row.get("date").getFullYear()}/
-                      {row.get("date").getMonth()}/
-                      {row.get("date").getDate()}
+                      {row.get('date').getFullYear()}/
+                      {row.get('date').getMonth()}/{row.get('date').getDate()}
                     </TableCell>
                   </TableRow>
                 ))}
