@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import ChartWrapper from './ChartWrapper/ChartWrapper';
+import { makeStyles } from '@material-ui/core/styles';
 import './App.css';
 import {
   text,
@@ -31,6 +32,17 @@ import Centroid from './Components/Centroid/Centroid';
 import TagData from './Components/TagData/TagData';
 import Charts from './Components/Charts/Charts';
 import * as tsnejs from '@jwalsh/tsnejs';
+// import List from '@material-ui/core/List';
+import Divider from '@material-ui/core/Divider';
+import Typography from '@material-ui/core/Typography';
+import InboxIcon from '@material-ui/icons/Inbox';
+import DraftsIcon from '@material-ui/icons/Drafts';
+import Card from '@material-ui/core/Card';
+import CardActions from '@material-ui/core/CardActions';
+import CardContent from '@material-ui/core/CardContent';
+import Grid from '@material-ui/core/Grid';
+
+// сиди
 
 const { List, Set, Map } = require('immutable');
 const createKDTree = require('static-kdtree');
@@ -74,6 +86,27 @@ class App extends Component {
       slider: newValue
     });
   };
+
+  // ListItemLink(props) {
+  //   return <ListItem button component="a" {...props} />;
+  // }
+
+  // useStyles = makeStyles({
+  //   root: {
+  //     minWidth: 275
+  //   },
+  //   bullet: {
+  //     display: 'inline-block',
+  //     margin: '0 2px',
+  //     transform: 'scale(0.8)'
+  //   },
+  //   title: {
+  //     fontSize: 14
+  //   },
+  //   pos: {
+  //     marginBottom: 12
+  //   }
+  // });
 
   downloadData = () => {
     tsv(this.state.data_url, (d, i) => {
@@ -474,8 +507,61 @@ class App extends Component {
         {/*<ChartWrapper />*/}
         <Button onClick={this.handleShowCharts}>Show charts</Button>
         {charts}
-        <BigTable bigArray={this.state.filteredData}>
-          <TableContainer component={Paper}>
+        <Grid
+          flexGrow="1"
+          container="fluid"
+          spacing={1}
+          bigArray={this.state.filteredData}
+        >
+          {this.state.filteredData.map((row, index) => (
+            <Grid item xs={12} md={4} lg={2}>
+              {/* сиди */}
+              <Card
+                borderRadius="12"
+                minWidth="100"
+                textAlign="center"
+                variant="outlined"
+              >
+                <CardContent padding="10px">
+                  {/* {row.get('key')}
+                onClick={() => this.handleRowRemoval(index)} */}
+                  <Typography align="center">
+                    {row.get('date').getDate()}/{row.get('date').getMonth()}/
+                    {row.get('date').getFullYear()}
+                    <br />
+                  </Typography>
+                  <Typography
+                    align="center"
+                    style={{ maxHeight: 150, overflow: 'scroll' }}
+                  >
+                    {row.get('sentence')}
+                  </Typography>
+                </CardContent>
+                <Divider variant="middle" />
+
+                <CardActions
+                  style={{ display: 'center', justifyContent: 'center' }}
+                >
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    align="justify"
+                  >
+                    {JSON.stringify(row.get('tags'))}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    align="justify"
+                  >
+                    {JSON.stringify(row.get('negtags'))}
+                  </Button>
+                </CardActions>
+              </Card>
+
+              {/* <TableContainer component={Paper}>
             <Table aria-label="simple table">
               <TableHead>
                 <TableRow>
@@ -502,8 +588,10 @@ class App extends Component {
                 ))}
               </TableBody>
             </Table>
-          </TableContainer>
-        </BigTable>
+          </TableContainer> */}
+            </Grid>
+          ))}
+        </Grid>
       </div>
     );
   }
