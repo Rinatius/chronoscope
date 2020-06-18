@@ -35,12 +35,13 @@ import * as tsnejs from '@jwalsh/tsnejs';
 // import List from '@material-ui/core/List';
 import Divider from '@material-ui/core/Divider';
 import Typography from '@material-ui/core/Typography';
-import InboxIcon from '@material-ui/icons/Inbox';
-import DraftsIcon from '@material-ui/icons/Drafts';
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
 import Grid from '@material-ui/core/Grid';
+import IconButton from '@material-ui/core/IconButton';
+import DeleteIcon from '@material-ui/icons/Delete';
+import { positions } from '@material-ui/system';
 
 // сиди
 
@@ -514,33 +515,28 @@ class App extends Component {
           bigArray={this.state.filteredData}
         >
           {this.state.filteredData.map((row, index) => (
-            <Grid item xs={12} md={4} lg={2}>
+            <Grid item xs={12} md={4} lg={3}>
               {/* сиди */}
-              <Card
-                borderRadius="12"
-                minWidth="100"
-                textAlign="center"
-                variant="outlined"
-              >
-                <CardContent padding="10px">
-                  {/* {row.get('key')}
-                onClick={() => this.handleRowRemoval(index)} */}
-                  <Typography align="center">
+              <Card borderRadius="12" minWidth="120" variant="outlined">
+                <CardContent>
+                  <Typography>
                     {row.get('date').getDate()}/{row.get('date').getMonth()}/
                     {row.get('date').getFullYear()}
-                    <br />
                   </Typography>
-                  <Typography
-                    align="center"
-                    style={{ maxHeight: 150, overflow: 'scroll' }}
-                  >
+                  <br />
+                  <Divider variant="middle" />
+                  <br />
+                  <Typography style={{ maxHeight: 150, overflow: 'scroll' }}>
                     {row.get('sentence')}
                   </Typography>
                 </CardContent>
                 <Divider variant="middle" />
 
                 <CardActions
-                  style={{ display: 'center', justifyContent: 'center' }}
+                  style={{
+                    display: 'center',
+                    justifyContent: 'center'
+                  }}
                 >
                   <Button
                     variant="outlined"
@@ -558,6 +554,15 @@ class App extends Component {
                   >
                     {JSON.stringify(row.get('negtags'))}
                   </Button>
+                  <IconButton
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    align="justify"
+                    onClick={() => this.handleRowRemoval(index)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
                 </CardActions>
               </Card>
 
