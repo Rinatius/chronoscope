@@ -41,6 +41,8 @@ import CardContent from '@material-ui/core/CardContent';
 import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
+import MoreVertIcon from '@material-ui/icons/MoreVert';
+import CardHeader from '@material-ui/core/CardHeader';
 import { positions } from '@material-ui/system';
 
 // сиди
@@ -519,10 +521,19 @@ class App extends Component {
               {/* сиди */}
               <Card borderRadius="12" minWidth="120" variant="outlined">
                 <CardContent>
-                  <Typography>
-                    {row.get('date').getDate()}/{row.get('date').getMonth()}/
-                    {row.get('date').getFullYear()}
-                  </Typography>
+                  <CardHeader
+                    size="small"
+                    action={
+                      <IconButton aria-label="settings">
+                        <MoreVertIcon />
+                      </IconButton>
+                    }
+                    subheader={JSON.stringify(row.get('tags'))}
+                  />
+
+                  {/* {row.get('date').getDate()}/{row.get('date').getMonth()}/
+                    {row.get('date').getFullYear()} */}
+
                   <br />
                   <Divider variant="middle" />
                   <br />
@@ -544,7 +555,8 @@ class App extends Component {
                     size="small"
                     align="justify"
                   >
-                    {JSON.stringify(row.get('tags'))}
+                    Tag
+                    {/* {JSON.stringify(row.get('tags'))} */}
                   </Button>
                   <Button
                     variant="outlined"
@@ -552,9 +564,10 @@ class App extends Component {
                     size="small"
                     align="justify"
                   >
-                    {JSON.stringify(row.get('negtags'))}
+                    NegTag
+                    {/* {JSON.stringify(row.get('negtags'))} */}
                   </Button>
-                  <IconButton
+                  {/* <IconButton
                     variant="outlined"
                     color="primary"
                     size="small"
@@ -562,7 +575,7 @@ class App extends Component {
                     onClick={() => this.handleRowRemoval(index)}
                   >
                     <DeleteIcon />
-                  </IconButton>
+                  </IconButton> */}
                 </CardActions>
               </Card>
 
