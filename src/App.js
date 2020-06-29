@@ -21,7 +21,6 @@ import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
 import BigTable from './BigTable/BigTable';
 import { CSVDownload } from 'react-csv';
 import { createConditionalNode, mean } from 'mathjs';
@@ -43,9 +42,7 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import CardHeader from '@material-ui/core/CardHeader';
-import { positions } from '@material-ui/system';
-import Pagination from 'react-js-pagination';
-import ReactPaginate from 'react-paginate';
+import Pagination from '@material-ui/lab/Pagination';
 
 // сиди
 
@@ -85,20 +82,15 @@ class App extends Component {
     scatter3dData: [],
     scatter3dStatus: '',
 
-    offset: 0,
     currentPage: 1,
     itemPerPage: 12
   };
 
-  // Pagination " сиди "
+  // Handle Pagination
 
-  handlePageChange = numPage => {
-    let offset = this.state.offset + this.state.itemPerPage;
-    const numOfPages = this.state.filteredData.count(page => page.get('key'));
-
+  handlePageChange = (event, value) => {
     this.setState({
-      currentPage: numPage,
-      filteredData: offset
+      currentPage: value
     });
   };
 
@@ -467,19 +459,85 @@ class App extends Component {
         />
       );
     }
+    // Display items in card
+    const { currentPage, itemPerPage } = this.state;
+    const indexOfLastPage = currentPage * itemPerPage;
+    const indexOfFirstPage = indexOfLastPage - itemPerPage;
+
+    const renderPages = this.state.filteredData
+      .slice(indexOfFirstPage, indexOfLastPage)
+      .map((row, index) => (
+        <Grid item xs={12} md={4} lg={3}>
+          <Card borderRadius="12" minWidth="120" variant="outlined" color="red">
+            <CardHeader
+              action={
+                <IconButton aria-label="settings">
+                  <MoreVertIcon />
+                </IconButton>
+              }
+              subheader={JSON.stringify(row.get('tags'))}
+            />
+            <CardContent>
+              <Typography
+                style={{
+                  maxHeight: 150,
+                  overflow: 'scroll',
+                  variant: 'body2',
+                  component: 'paper'
+                }}
+              >
+                {row.get('sentence')}
+              </Typography>
+            </CardContent>
+            <Divider variant="middle" />
+
+            <CardActions disableSpacing={false}>
+              <Button
+                variant="outlined"
+                color="primary"
+                size="small"
+                align="justify"
+                fullWidth="true"
+              >
+                Tag
+                {/* {JSON.stringify(row.get('tags'))} */}
+              </Button>
+              <Button
+                variant="outlined"
+                color="primary"
+                size="small"
+                align="justify"
+                fullWidth="true"
+              >
+                NegTag
+                {/* {JSON.stringify(row.get('negtags'))} */}
+              </Button>
+              {/* <IconButton
+                    onClick={() => this.handleRowRemoval(index)}
+                  >
+                    <DeleteIcon />
+                  </IconButton> */}
+            </CardActions>
+          </Card>
+        </Grid>
+      ));
+
+    // Displaying pagination ( сиди )
+    const numItems = this.state.filteredData.count(pages => pages.get('key'));
+    const pageCount = Math.ceil(numItems / itemPerPage);
 
     let pages = null;
     if (this.state.filteredData) {
       pages = (
-        <div>
-          <Pagination
-            activePage={this.state.currentPage}
-            itemsCountPerPage={10}
-            totalItemsCount={this.state.numOfPages}
-            pageRangeDisplayed={5}
-            onChange={this.handlePageChange.bind(this)}
-          />
-        </div>
+        <Pagination
+          count={pageCount}
+          page={this.state.currentPage}
+          onChange={this.handlePageChange.bind(this)}
+          color="primary"
+          showFirstButton
+          showLastButton
+          spacing={2}
+        />
       );
     }
 
@@ -522,83 +580,24 @@ class App extends Component {
         {/*<ChartWrapper />*/}
         <Button onClick={this.handleShowCharts}>Show charts</Button>
         {charts}
-        {pages}
+
         <Grid
           flexGrow="1"
           container="fluid"
           spacing={1}
           bigArray={this.state.filteredData}
         >
-          {this.state.filteredData
-            .slice(
-              this.state.offset,
-              this.state.offset + this.state.itemPerPage
-            )
-            .map((row, index) => (
-              <Grid item xs={12} md={4} lg={3}>
-                {/* сиди */}
-                <Card
-                  borderRadius="12"
-                  minWidth="120"
-                  variant="outlined"
-                  color="red"
-                >
-                  <CardHeader
-                    action={
-                      <IconButton aria-label="settings">
-                        <MoreVertIcon />
-                      </IconButton>
-                    }
-                    subheader={JSON.stringify(row.get('tags'))}
-                  />
-
-                  {/* {row.get('date').getDate()}/{row.get('date').getMonth()}/
-                    {row.get('date').getFullYear()} */}
-                  <CardContent>
-                    <Typography
-                      style={{
-                        maxHeight: 150,
-                        overflow: 'scroll',
-                        variant: 'body2',
-                        component: 'paper'
-                      }}
-                    >
-                      {row.get('sentence')}
-                    </Typography>
-                  </CardContent>
-                  <Divider variant="middle" />
-
-                  <CardActions disableSpacing={false}>
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      size="small"
-                      align="justify"
-                      fullWidth="true"
-                    >
-                      Tag
-                      {/* {JSON.stringify(row.get('tags'))} */}
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      size="small"
-                      align="justify"
-                      fullWidth="true"
-                    >
-                      NegTag
-                      {/* {JSON.stringify(row.get('negtags'))} */}
-                    </Button>
-                    {/* <IconButton
-                    onClick={() => this.handleRowRemoval(index)}
-                  >
-                    <DeleteIcon />
-                  </IconButton> */}
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))}
+          {renderPages}
         </Grid>
+        <Divider />
+        <br></br>
+        <Typography
+          component="div"
+          style={{ height: 100, width: '100%', position: 'relative' }}
+        >
+          {pages}
+        </Typography>
+        <br></br>
       </div>
     );
   }
