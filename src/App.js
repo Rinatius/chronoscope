@@ -44,6 +44,8 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import CardHeader from '@material-ui/core/CardHeader';
 import { positions } from '@material-ui/system';
+import Pagination from 'react-js-pagination';
+import ReactPaginate from 'react-paginate';
 
 // сиди
 
@@ -81,7 +83,23 @@ class App extends Component {
     tagModeEnabled: false,
     showCharts: true,
     scatter3dData: [],
-    scatter3dStatus: ''
+    scatter3dStatus: '',
+
+    offset: 0,
+    currentPage: 1,
+    itemPerPage: 12
+  };
+
+  // Pagination " сиди "
+
+  handlePageChange = numPage => {
+    let offset = this.state.offset + this.state.itemPerPage;
+    const numOfPages = this.state.filteredData.count(page => page.get('key'));
+
+    this.setState({
+      currentPage: numPage,
+      filteredData: offset
+    });
   };
 
   handleSliderChange = (event, newValue) => {
@@ -89,27 +107,6 @@ class App extends Component {
       slider: newValue
     });
   };
-
-  // ListItemLink(props) {
-  //   return <ListItem button component="a" {...props} />;
-  // }
-
-  // useStyles = makeStyles({
-  //   root: {
-  //     minWidth: 275
-  //   },
-  //   bullet: {
-  //     display: 'inline-block',
-  //     margin: '0 2px',
-  //     transform: 'scale(0.8)'
-  //   },
-  //   title: {
-  //     fontSize: 14
-  //   },
-  //   pos: {
-  //     marginBottom: 12
-  //   }
-  // });
 
   downloadData = () => {
     tsv(this.state.data_url, (d, i) => {
@@ -471,6 +468,21 @@ class App extends Component {
       );
     }
 
+    let pages = null;
+    if (this.state.filteredData) {
+      pages = (
+        <div>
+          <Pagination
+            activePage={this.state.currentPage}
+            itemsCountPerPage={10}
+            totalItemsCount={this.state.numOfPages}
+            pageRangeDisplayed={5}
+            onChange={this.handlePageChange.bind(this)}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="App">
         <DownloadData
@@ -510,19 +522,28 @@ class App extends Component {
         {/*<ChartWrapper />*/}
         <Button onClick={this.handleShowCharts}>Show charts</Button>
         {charts}
+        {pages}
         <Grid
           flexGrow="1"
           container="fluid"
           spacing={1}
           bigArray={this.state.filteredData}
         >
-          {this.state.filteredData.map((row, index) => (
-            <Grid item xs={12} md={4} lg={3}>
-              {/* сиди */}
-              <Card borderRadius="12" minWidth="120" variant="outlined">
-                <CardContent>
+          {this.state.filteredData
+            .slice(
+              this.state.offset,
+              this.state.offset + this.state.itemPerPage
+            )
+            .map((row, index) => (
+              <Grid item xs={12} md={4} lg={3}>
+                {/* сиди */}
+                <Card
+                  borderRadius="12"
+                  minWidth="120"
+                  variant="outlined"
+                  color="red"
+                >
                   <CardHeader
-                    size="small"
                     action={
                       <IconButton aria-label="settings">
                         <MoreVertIcon />
@@ -533,82 +554,50 @@ class App extends Component {
 
                   {/* {row.get('date').getDate()}/{row.get('date').getMonth()}/
                     {row.get('date').getFullYear()} */}
-
-                  <br />
+                  <CardContent>
+                    <Typography
+                      style={{
+                        maxHeight: 150,
+                        overflow: 'scroll',
+                        variant: 'body2',
+                        component: 'paper'
+                      }}
+                    >
+                      {row.get('sentence')}
+                    </Typography>
+                  </CardContent>
                   <Divider variant="middle" />
-                  <br />
-                  <Typography style={{ maxHeight: 150, overflow: 'scroll' }}>
-                    {row.get('sentence')}
-                  </Typography>
-                </CardContent>
-                <Divider variant="middle" />
 
-                <CardActions
-                  style={{
-                    display: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    size="small"
-                    align="justify"
-                  >
-                    Tag
-                    {/* {JSON.stringify(row.get('tags'))} */}
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    size="small"
-                    align="justify"
-                  >
-                    NegTag
-                    {/* {JSON.stringify(row.get('negtags'))} */}
-                  </Button>
-                  {/* <IconButton
-                    variant="outlined"
-                    color="primary"
-                    size="small"
-                    align="justify"
+                  <CardActions disableSpacing={false}>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      size="small"
+                      align="justify"
+                      fullWidth="true"
+                    >
+                      Tag
+                      {/* {JSON.stringify(row.get('tags'))} */}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      size="small"
+                      align="justify"
+                      fullWidth="true"
+                    >
+                      NegTag
+                      {/* {JSON.stringify(row.get('negtags'))} */}
+                    </Button>
+                    {/* <IconButton
                     onClick={() => this.handleRowRemoval(index)}
                   >
                     <DeleteIcon />
                   </IconButton> */}
-                </CardActions>
-              </Card>
-
-              {/* <TableContainer component={Paper}>
-            <Table aria-label="simple table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Sentence</TableCell>
-                  <TableCell align="left">Tags</TableCell>
-                  <TableCell align="left">Negtags</TableCell>
-                  <TableCell align="left">Date</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {this.state.filteredData.map((row, index) => (
-                  <TableRow
-                    key={row.get('key')}
-                    onClick={() => this.handleRowRemoval(index)}
-                  >
-                    <TableCell align="left">{row.get('sentence')}</TableCell>
-                    <TableCell>{JSON.stringify(row.get('tags'))}</TableCell>
-                    <TableCell>{JSON.stringify(row.get('negtags'))}</TableCell>
-                    <TableCell align="left">
-                      {row.get('date').getFullYear()}/
-                      {row.get('date').getMonth()}/{row.get('date').getDate()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer> */}
-            </Grid>
-          ))}
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
         </Grid>
       </div>
     );
