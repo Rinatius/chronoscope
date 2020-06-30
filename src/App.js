@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import ChartWrapper from './ChartWrapper/ChartWrapper';
 import { makeStyles } from '@material-ui/core/styles';
 import './App.css';
@@ -30,6 +30,8 @@ import FilterData from './Components/FilterData/FilterData';
 import Centroid from './Components/Centroid/Centroid';
 import TagData from './Components/TagData/TagData';
 import Charts from './Components/Charts/Charts';
+import ModifiedData from './Components/ModifiedData/ModifiedData';
+
 import * as tsnejs from '@jwalsh/tsnejs';
 // import List from '@material-ui/core/List';
 import Divider from '@material-ui/core/Divider';
@@ -39,10 +41,17 @@ import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
 import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
-import DeleteIcon from '@material-ui/icons/Delete';
+import { DeleteIcon, ExpandMoreIcon } from '@material-ui/icons/Delete';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import CardHeader from '@material-ui/core/CardHeader';
 import Pagination from '@material-ui/lab/Pagination';
+import {
+  AppBar,
+  Toolbar,
+  ExpansionPanel,
+  ExpansionPanelSummary,
+  ExpansionPanelDetails
+} from '@material-ui/core';
 
 // сиди
 
@@ -543,61 +552,71 @@ class App extends Component {
 
     return (
       <div className="App">
-        <DownloadData
-          data_url={this.state.data_url}
-          embeds_url={this.state.embeds_url}
-          handleDataUrlChange={this.handleDataUrlChange}
-          handleEmbedsUrlChange={this.handleEmbedsUrlChange}
-          handleDownloadDataClick={this.handleDownloadDataClick}
-        />
-        <FilterData
-          reges={this.state.regex}
-          tagSelector={this.state.tagSelector}
-          handleRegexTextChange={this.handleRegexTextChange}
-          handleTagSelectorTextChange={this.handleTagSelectorTextChange}
-          handleFilterClick={this.handleFilterClick}
-        />
-        <Centroid
-          maxKDRadius={this.state.maxKDRadius}
-          handleCalculateCentroidClick={this.handleCalculateCentroidClick}
-          handleRadiusChange={this.handleRadiusChange}
-          handleNNSearchClick={this.handleNNSearchClick}
-        />
-        <TagData
-          tagModeEnabled={this.state.tagModeEnabled}
-          tag={this.state.tag}
-          handleTagTextChange={this.handleTagTextChange}
-          handleTagClick={this.handleTagClick}
-          handleTagModeChange={this.handleTagModeChange}
-        />
-        <Button variant="contained" onClick={this.handleGetDataClick}>
-          Download Modified Data
-        </Button>
-        {exportDownload}
-        {/*<CSVLink data={this.state.data.toJS()} separator={"\t"}>
+        <Fragment>
+          <AppBar position="static" color="primary">
+            <Toolbar variant="dense">
+              <Typography variant="headline" color="inherit">
+                Data on Covid-19 in Kyrgyzstan
+              </Typography>
+            </Toolbar>
+          </AppBar>
+
+          <DownloadData
+            data_url={this.state.data_url}
+            embeds_url={this.state.embeds_url}
+            handleDataUrlChange={this.handleDataUrlChange}
+            handleEmbedsUrlChange={this.handleEmbedsUrlChange}
+            handleDownloadDataClick={this.handleDownloadDataClick}
+          />
+          <FilterData
+            reges={this.state.regex}
+            tagSelector={this.state.tagSelector}
+            handleRegexTextChange={this.handleRegexTextChange}
+            handleTagSelectorTextChange={this.handleTagSelectorTextChange}
+            handleFilterClick={this.handleFilterClick}
+          />
+          <Centroid
+            maxKDRadius={this.state.maxKDRadius}
+            handleCalculateCentroidClick={this.handleCalculateCentroidClick}
+            handleRadiusChange={this.handleRadiusChange}
+            handleNNSearchClick={this.handleNNSearchClick}
+          />
+          <TagData
+            tagModeEnabled={this.state.tagModeEnabled}
+            tag={this.state.tag}
+            handleTagTextChange={this.handleTagTextChange}
+            handleTagClick={this.handleTagClick}
+            handleTagModeChange={this.handleTagModeChange}
+          />
+          <ModifiedData handleGetDataClick={this.state.handleGetDataClick} />
+
+          {exportDownload}
+          {/*<CSVLink data={this.state.data.toJS()} separator={"\t"}>
           Download me
         </CSVLink>*/}
-        {/*<ChartWrapper />*/}
-        <Button onClick={this.handleShowCharts}>Show charts</Button>
-        {charts}
+          {/*<ChartWrapper />*/}
 
-        <Grid
-          flexGrow="1"
-          container="fluid"
-          spacing={1}
-          bigArray={this.state.filteredData}
-        >
-          {renderPages}
-        </Grid>
-        <Divider />
-        <br></br>
-        <Typography
-          component="div"
-          style={{ height: 100, width: '100%', position: 'relative' }}
-        >
-          {pages}
-        </Typography>
-        <br></br>
+          <Button onClick={this.handleShowCharts}>Show charts</Button>
+          {charts}
+
+          <Grid
+            flexGrow="1"
+            container="fluid"
+            spacing={1}
+            bigArray={this.state.filteredData}
+          >
+            {renderPages}
+          </Grid>
+          <Divider />
+          <br></br>
+          <Typography
+            component="div"
+            style={{ height: 100, width: '100%', position: 'relative' }}
+          >
+            {pages}
+          </Typography>
+          <br></br>
+        </Fragment>
       </div>
     );
   }
