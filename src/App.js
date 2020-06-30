@@ -32,7 +32,6 @@ import FilterData from './Components/FilterData/FilterData';
 import Centroid from './Components/Centroid/Centroid';
 import TagData from './Components/TagData/TagData';
 import Charts from './Components/Charts/Charts';
-import ModifiedData from './Components/ModifiedData/ModifiedData';
 
 import * as tsnejs from '@jwalsh/tsnejs';
 // import List from '@material-ui/core/List';
@@ -591,9 +590,32 @@ class App extends Component {
             handleTagClick={this.handleTagClick}
             handleTagModeChange={this.handleTagModeChange}
           />
-          <ModifiedData handleGetDataClick={this.state.handleGetDataClick} />
+          <Grid
+            item
+            xs={12}
+            component="form"
+            style={{
+              padding: 10,
+              display: 'flex',
+              marginBottom: 10,
+              marginTop: 10,
+              alignItems: 'center',
+              width: 450
+            }}
+          >
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              align="center"
+              onClick={this.handleGetDataClick}
+            >
+              Download Modified Data
+            </Button>
 
-          {exportDownload}
+            {exportDownload}
+          </Grid>
+
           {/*<CSVLink data={this.state.data.toJS()} separator={"\t"}>
           Download me
         </CSVLink>*/}
