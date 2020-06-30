@@ -2,6 +2,7 @@ import React, { Component, Fragment } from 'react';
 import ChartWrapper from './ChartWrapper/ChartWrapper';
 import { makeStyles } from '@material-ui/core/styles';
 import './App.css';
+
 import {
   text,
   csv,
@@ -22,7 +23,8 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import BigTable from './BigTable/BigTable';
-import { CSVDownload } from 'react-csv';
+import Pagination from '@material-ui/lab/Pagination';
+import { CSVDownload, CSVLink } from 'react-csv';
 import { createConditionalNode, mean } from 'mathjs';
 import { fromArrayBuffer } from 'numpy-parser';
 import DownloadData from './Components/DownloadData/DownloadData';
@@ -34,23 +36,24 @@ import ModifiedData from './Components/ModifiedData/ModifiedData';
 
 import * as tsnejs from '@jwalsh/tsnejs';
 // import List from '@material-ui/core/List';
-import Divider from '@material-ui/core/Divider';
-import Typography from '@material-ui/core/Typography';
-import Card from '@material-ui/core/Card';
-import CardActions from '@material-ui/core/CardActions';
-import CardContent from '@material-ui/core/CardContent';
-import Grid from '@material-ui/core/Grid';
-import IconButton from '@material-ui/core/IconButton';
+
 import { DeleteIcon, ExpandMoreIcon } from '@material-ui/icons/Delete';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
-import CardHeader from '@material-ui/core/CardHeader';
-import Pagination from '@material-ui/lab/Pagination';
+
 import {
   AppBar,
   Toolbar,
   ExpansionPanel,
   ExpansionPanelSummary,
-  ExpansionPanelDetails
+  ExpansionPanelDetails,
+  Divider,
+  Card,
+  CardActions,
+  CardContent,
+  CardHeader,
+  Grid,
+  Typography,
+  IconButton
 } from '@material-ui/core';
 
 // сиди

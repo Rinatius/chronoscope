@@ -31,6 +31,15 @@ const centroid = props => {
   return (
     <div>
       <Grid item xs={12} component="form" className={classes.root}>
+        <Button
+          variant="outlined"
+          color="primary"
+          size="small"
+          align="center"
+          onClick={props.handleCalculateCentroidClick}
+        >
+          Calculate Centroid
+        </Button>
         <TextField
           className={classes.input}
           id="tag_field"
@@ -48,12 +57,9 @@ const centroid = props => {
           align="center"
           onClick={props.handleNNSearchClick}
         >
-          Search around current centroid
+          Search centroid
         </Button>
       </Grid>
-      {/* <Button variant="contained" onClick={props.handleCalculateCentroidClick}>
-        Calculate Centroid
-      </Button> */}
     </div>
   );
 };
