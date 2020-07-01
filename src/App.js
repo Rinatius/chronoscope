@@ -1,8 +1,8 @@
 import React, { Component, Fragment } from 'react';
-import ChartWrapper from './ChartWrapper/ChartWrapper';
-import { makeStyles } from '@material-ui/core/styles';
-import './App.css';
 
+import { withStyles, useTheme } from '@material-ui/core/styles';
+import clsx from 'clsx';
+import './App.css';
 import {
   text,
   csv,
@@ -15,31 +15,30 @@ import {
   timeDays,
   range
 } from 'd3';
-import Button from '@material-ui/core/Button';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import BigTable from './BigTable/BigTable';
-import Pagination from '@material-ui/lab/Pagination';
+
 import { CSVDownload, CSVLink } from 'react-csv';
 import { createConditionalNode, mean } from 'mathjs';
+import * as tsnejs from '@jwalsh/tsnejs';
 import { fromArrayBuffer } from 'numpy-parser';
+
+import BigTable from './BigTable/BigTable';
 import DownloadData from './Components/DownloadData/DownloadData';
 import FilterData from './Components/FilterData/FilterData';
 import Centroid from './Components/Centroid/Centroid';
 import TagData from './Components/TagData/TagData';
 import Charts from './Components/Charts/Charts';
+import ChartWrapper from './ChartWrapper/ChartWrapper';
 
-import * as tsnejs from '@jwalsh/tsnejs';
-// import List from '@material-ui/core/List';
+import Pagination from '@material-ui/lab/Pagination';
 
-import { DeleteIcon, ExpandMoreIcon } from '@material-ui/icons/Delete';
+import { DeleteIcon, ExpandMoreIcon } from '@material-ui/icons';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
+import MenuIcon from '@material-ui/icons/Menu';
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 
 import {
+  Button,
   AppBar,
   Toolbar,
   ExpansionPanel,
@@ -52,7 +51,9 @@ import {
   CardHeader,
   Grid,
   Typography,
-  IconButton
+  IconButton,
+  Drawer,
+  ListItemText
 } from '@material-ui/core';
 
 // сиди
@@ -94,7 +95,23 @@ class App extends Component {
     scatter3dStatus: '',
 
     currentPage: 1,
-    itemPerPage: 12
+    itemPerPage: 12,
+
+    openDrawer: false
+  };
+
+  //Handle Drawer/SideBar
+
+  handleDrawerOpen = () => {
+    this.setState({
+      openDrawer: true
+    });
+  };
+
+  handleDrawerClose = () => {
+    this.setState({
+      openDrawer: false
+    });
   };
 
   // Handle Pagination
@@ -438,6 +455,8 @@ class App extends Component {
   }
 
   render() {
+    const theme = useTheme;
+
     let exportDownload = null;
     if (this.state.prepareDownload) {
       exportDownload = (
@@ -470,6 +489,7 @@ class App extends Component {
         />
       );
     }
+
     // Display items in card
     const { currentPage, itemPerPage } = this.state;
     const indexOfLastPage = currentPage * itemPerPage;
@@ -552,17 +572,47 @@ class App extends Component {
       );
     }
 
+    // Setting Persistent Drawer
+
     return (
       <div className="App">
-        <Fragment>
-          <AppBar position="static" color="primary">
-            <Toolbar variant="dense">
-              <Typography variant="headline" color="inherit">
-                Data on Covid-19 in Kyrgyzstan
-              </Typography>
-            </Toolbar>
-          </AppBar>
+        <AppBar position="fixed" color="primary">
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              onClick={this.handleDrawerOpen}
+              edge="start"
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography variant="h6" noWrap>
+              Chronoscope
+            </Typography>
+          </Toolbar>
+        </AppBar>
+        <Drawer
+          width="240"
+          flexShrink="0"
+          variant="persistent"
+          anchor="left"
+          open={this.state.openDrawer}
+        >
+          <div
+            display="flex"
+            spacing="0, 2"
+            // necessary for content to be below app bar
+            justifyContent="flex-end"
+          >
+            <Typography variant="subtitle1" noWrap>
+              Please Enter Your Data
+              <IconButton onClick={this.handleDrawerClose}>
+                <ChevronLeftIcon />
+              </IconButton>
+            </Typography>
+          </div>
 
+          <Divider />
           <DownloadData
             data_url={this.state.data_url}
             embeds_url={this.state.embeds_url}
@@ -590,58 +640,45 @@ class App extends Component {
             handleTagClick={this.handleTagClick}
             handleTagModeChange={this.handleTagModeChange}
           />
-          <Grid
-            item
-            xs={12}
-            component="form"
-            style={{
-              padding: 10,
-              display: 'flex',
-              marginBottom: 10,
-              marginTop: 10,
-              alignItems: 'center',
-              width: 450
-            }}
+
+          <Button
+            variant="outlined"
+            color="primary"
+            size="small"
+            align="center"
+            display="flex"
+            onClick={this.handleGetDataClick}
           >
-            <Button
-              variant="outlined"
-              color="primary"
-              size="small"
-              align="center"
-              onClick={this.handleGetDataClick}
-            >
-              Download Modified Data
-            </Button>
+            Download Modified Data
+          </Button>
 
-            {exportDownload}
-          </Grid>
+          {exportDownload}
+          <Button onClick={this.handleShowCharts}>Show charts</Button>
+        </Drawer>
+        {charts}
 
-          {/*<CSVLink data={this.state.data.toJS()} separator={"\t"}>
+        {/*<CSVLink data={this.state.data.toJS()} separator={"\t"}>
           Download me
         </CSVLink>*/}
-          {/*<ChartWrapper />*/}
+        {/*<ChartWrapper />*/}
 
-          <Button onClick={this.handleShowCharts}>Show charts</Button>
-          {charts}
-
-          <Grid
-            flexGrow="1"
-            container="fluid"
-            spacing={1}
-            bigArray={this.state.filteredData}
-          >
-            {renderPages}
-          </Grid>
-          <Divider />
-          <br></br>
-          <Typography
-            component="div"
-            style={{ height: 100, width: '100%', position: 'relative' }}
-          >
-            {pages}
-          </Typography>
-          <br></br>
-        </Fragment>
+        <Grid
+          flexGrow="1"
+          container="fluid"
+          spacing={1}
+          bigArray={this.state.filteredData}
+        >
+          {renderPages}
+        </Grid>
+        <Divider />
+        <br></br>
+        <Typography
+          component="div"
+          style={{ height: 100, width: '100%', position: 'relative' }}
+        >
+          {pages}
+        </Typography>
+        <br></br>
       </div>
     );
   }
