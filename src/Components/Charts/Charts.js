@@ -151,15 +151,15 @@ const charts = (props) => {
               onClick={props.handleNestDataClick}>
               Nest Data
             </Button>
-           <div>
-              {JSON.stringify(props.nestedData)}
-            </div>
-            <div>
-              {JSON.stringify(props.nestedAllTags)}
-            </div>
-            <div>
-              {JSON.stringify(props.nestedAllTagsDates)}
-            </div>
+           {/*<div>*/}
+           {/*   {JSON.stringify(props.nestedData)}*/}
+           {/* </div>*/}
+           {/* <div>*/}
+           {/*   {JSON.stringify(props.nestedAllTags)}*/}
+           {/* </div>*/}
+           {/* <div>*/}
+           {/*   {JSON.stringify(props.nestedAllTagsDates)}*/}
+           {/* </div>*/}
           </div>
         </div>
     )

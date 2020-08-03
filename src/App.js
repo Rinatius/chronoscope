@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ChartWrapper from './ChartWrapper/ChartWrapper';
 import './App.css';
-import { text, csv, tsv, scaleTime, extent, nest, timeFormat, sum, timeDays, range } from 'd3';
+import { text, csv, tsv, scaleTime, extent, min, max, nest, timeFormat, sum, timeDays, range } from 'd3';
 import Button from '@material-ui/core/Button';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -30,21 +30,29 @@ const ops = require("ndarray-ops")
 const unpack = require('ndarray-unpack')
 
 
+const KEY_COL = "key"
+const DATE_COL = "created_at"
+const CONTENT_COL = "sentence"
+const ACCOUNT_COL = "account"
+const USERNAME_COL = "username"
+const TAGS_COL = "tags"
+const NEGTAGS_COL = "negtags"
 
 class App extends Component {
 
   state = {
     slider: [0, 100],
-    data_url: "https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/nuk%2BQ2%2Bs.csv?alt=media&token=187d3eda-38d9-4d6b-be2e-c35ed91be3fa",
+    data_url: "https://neo4j.kloop.io/html/insta_impichment.tsv", //"https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/chronosope%2Fimp_bots_comments.tsv?alt=media&token=1ce5767a-cc5a-4beb-b218-ac68dfe2486e", //https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/nuk%2BQ2%2Bs.csv?alt=media&token=187d3eda-38d9-4d6b-be2e-c35ed91be3fa",
     data: List([]),
     filteredData: List([]),
     exclude: List([]),
     timeFilteredData: List([]),
-    embeds_url: "https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/comments_embeddings.npy?alt=media&token=87cd348c-f954-49b9-8731-689421435d8b",
+    embeds_url: "",//"https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/comments_embeddings.npy?alt=media&token=87cd348c-f954-49b9-8731-689421435d8b",
     embeddings: [],
     kdTree: null,
     centroid: [],
     maxKDRadius: 0.1,
+    regex: "",
     tag: "",
     tagSelector: "",
     prepareDownload: false,
@@ -67,18 +75,28 @@ class App extends Component {
   };
 
   downloadData = () => {
+    let check = true
     tsv(this.state.data_url, (d, i) => {
-      return Map({
-        key: i,
-        date: new Date(d.date),
-        sentence: d.sentence,
-        tags: Set(d.tags.split(",")),
-        negtags: ("negtags" in d) ? Set(d.negtags.split(",")) : Set([])
+      const res = Map({
+        key: (KEY_COL in d) ? parseInt(d[KEY_COL]) : i,
+        date: new Date(d[DATE_COL]),
+        content: d[CONTENT_COL],
+        account: d[ACCOUNT_COL],
+        username: d[USERNAME_COL],
+        tags: (TAGS_COL in d) ? Set(d[TAGS_COL].split(",")) : Set([]),
+        negtags: (NEGTAGS_COL in d) ? Set(d[NEGTAGS_COL].split(",")) : Set([])
       });
+      // if (i !== parseInt(d[KEY_COL]) && check) {
+      //   console.log("Disorder starts", d)
+      //   console.log("Disorder starts index", i)
+      //   check = false
+      // }
+      return res;
     }).then(download => {
               this.timeScale = scaleTime()
                   .domain(extent(download, d => d.get("date").getTime()))
                   .range([0, 100])
+              console.log("Array Length", download.length)
               //let filtered = this.timeFilter(download, this.state.slider)
               this.setState({data: List(download)});
     });
@@ -121,7 +139,7 @@ class App extends Component {
     let filtered = []
     if (this.state.regex.length > 0) {
       let re = new RegExp(this.state.regex, "i");
-      filtered = this.state.data.filter(d => (re.test(d.get("sentence"))));
+      filtered = this.state.data.filter(d => (re.test(d.get("content"))));
     } else {
       filtered = this.state.data
     }
@@ -185,10 +203,26 @@ class App extends Component {
     }))
 
     //Select time unit
-    let day = timeFormat("%U");//timeFormat("%Y-%m-%d");
+    let day = timeFormat("%U");
+    //let day = timeFormat("%Y-%m-%d");
     //Determine data time extent given time unit
+    //let dates = {}
+    // data.forEach(d => {
+    //   if ((week(d.date)[0])==="NaN") {
+    //     console.log("Wrong Date Index", d.key)
+    //   }
+    //   dates[week(d.date)] = d;
+    // })
+    // console.log("All Dates", dates)
     let dataExtent = extent(data, d => day(d.date));
+    //let dataMin = min(data, d => day(d.date));
+    //let dataMax = max(data, d => day(d.date));
+    // console.log("Data Extent", dataExtent)
+    // console.log("Data Min", dataMin)
+    // console.log("Data Max", dataMax)
     let timeRange = range(dataExtent[0], dataExtent[1]);
+    //let timeRange = timeDays(dataExtent[0], dataExtent[1]).map(d => day(d));
+    console.log("Time Range", timeRange)
     let nestedAllTagsDates = nest().key(d => day(d.date))
                        .rollup(values => sum(values, d => +1))
                        .map(flatData);
@@ -198,7 +232,7 @@ class App extends Component {
                        .rollup(values => sum(values, d => +1))
                        .map(flatData);
 
-    //let timeRange = timeDays(dataExtent[0], dataExtent[1]).map(d => day(d));
+
     let zeroPadded = nested.keys()
                            .map(d => {
                              return {key: d,
@@ -396,7 +430,6 @@ class App extends Component {
         nestedData={this.state.nestedData}
         nestedAllTags={this.state.nestedAllTags}
         nestedAllTagsDates={this.state.nestedAllTagsDates}
-        timeRange={this.state.timeRange}
         nestedPercentData={this.state.nestedPercentData}
         slider={this.state.slider}
         handleSliderChange={this.handleSliderChangeo}
@@ -451,9 +484,11 @@ class App extends Component {
             <Table aria-label="simple table">
               <TableHead>
                 <TableRow>
-                  <TableCell>Sentence</TableCell>
+                  <TableCell>Content</TableCell>
+                  <TableCell align="left">Account</TableCell>
+                  <TableCell align="left">User</TableCell>
                   <TableCell align="left">Tags</TableCell>
-                  <TableCell align="left">Negtags</TableCell>
+                  <TableCell align="left">Ntags</TableCell>
                   <TableCell align="left">Date</TableCell>
                 </TableRow>
               </TableHead>
@@ -463,7 +498,9 @@ class App extends Component {
                     key={row.get("key")}
                     onClick={() => this.handleRowRemoval(index)}
                   >
-                    <TableCell align="left">{row.get("sentence")}</TableCell>
+                    <TableCell align="left">{row.get("content")}</TableCell>
+                    <TableCell align="left">{row.get("account")}</TableCell>
+                    <TableCell align="left">{row.get("username")}</TableCell>
                     <TableCell>{JSON.stringify(row.get("tags"))}</TableCell>
                     <TableCell>{JSON.stringify(row.get("negtags"))}</TableCell>
                     <TableCell align="left">
