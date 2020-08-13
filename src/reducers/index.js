@@ -1,16 +1,6 @@
-const initialState = {
-  results: []
-}
+import { combineReducers } from 'redux'
+import initDataReducer from '../slices/initData'
 
-const reducer = (state = initialState, action) => {
- switch (action.type) {
-   case 'UPLOAD':
-     return {
-       ...state,
-       results: []
-     }
- }
- return state
-}
-
-export default reducer;
+export default combineReducers({
+  initData: initDataReducer
+})

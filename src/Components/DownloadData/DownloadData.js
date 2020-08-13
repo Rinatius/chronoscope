@@ -2,7 +2,15 @@ import React from 'react'
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 
-const downloadData = (props) => {
+import { fetchTable } from "../../slices/initData";
+import { useDispatch } from "react-redux";
+
+const DownloadData = (props) => {
+  const dispatch = useDispatch()
+  const onDownClick = () => {
+    dispatch(fetchTable("https://neo4j.kloop.io/html/insta_impichment.tsv"))
+    //props.handleDownloadDataClick()
+  }
     return(
         <div>
           <TextField
@@ -17,7 +25,7 @@ const downloadData = (props) => {
             value={props.embeds_url} />
           <Button
             variant="contained"
-            onClick={props.handleDownloadDataClick}>
+            onClick={onDownClick}>
             Download data
           </Button>
         </div>
@@ -25,4 +33,4 @@ const downloadData = (props) => {
     )
 }
 
-export default downloadData
+export default DownloadData

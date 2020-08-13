@@ -21,7 +21,6 @@ import TagData from './Components/TagData/TagData'
 import Charts from './Components/Charts/Charts'
 import * as tsnejs from '@jwalsh/tsnejs';
 
-
 const { List, Set, Map } = require('immutable');
 const createKDTree = require('static-kdtree');
 const ndarray = require("ndarray")
@@ -37,6 +36,7 @@ const ACCOUNT_COL = "account"
 const USERNAME_COL = "username"
 const TAGS_COL = "tags"
 const NEGTAGS_COL = "negtags"
+
 
 class App extends Component {
 
