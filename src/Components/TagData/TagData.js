@@ -4,7 +4,7 @@ import Button from '@material-ui/core/Button';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 
-import { onChange } from "../../slices/sliceTag";
+import { tagOnChange } from "../../slices/sliceTag";
 import { useDispatch, useSelector } from "react-redux";
 
 const tagData = (props) => {
@@ -17,8 +17,8 @@ const tagData = (props) => {
           <TextField
             id="tag_field"
             label="Tag"
-            onChange={() => {dispatch(onChange(tag))}}
-            value={tag} 
+            onChange={() => {dispatch(tagOnChange(props.tag))}}
+            value={props.tag} 
             />
           <Button
             variant="contained"
