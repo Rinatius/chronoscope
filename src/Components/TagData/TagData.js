@@ -11,14 +11,15 @@ const tagData = (props) => {
   
   const tag = useSelector(state => state.sliceTag);
   const dispatch = useDispatch()
-  
+  console.log(2)
+  console.log(props.tag)
     return(
         <div> 
           <TextField
             id="tag_field"
             label="Tag"
-            onChange={() => {dispatch(tagOnChange(props.tag))}}
-            value={props.tag} 
+            //onChange={() => {dispatch(tagOnChange(props.tag))}}
+            //value={props.tag} 
             />
           <Button
             variant="contained"
