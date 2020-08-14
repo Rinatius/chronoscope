@@ -20,6 +20,7 @@ import Centroid from './Components/Centroid/Centroid'
 import TagData from './Components/TagData/TagData'
 import Charts from './Components/Charts/Charts'
 import * as tsnejs from '@jwalsh/tsnejs';
+import UploadData from './Components/DownloadData/UploadData'
 
 const { List, Set, Map } = require('immutable');
 const createKDTree = require('static-kdtree');
@@ -67,6 +68,19 @@ class App extends Component {
     scatter3dData: [],
     scatter3dStatus: ''
   }
+  
+  listOfUrls = [
+    {
+      title: "firebase",
+      tsv: "https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/nuk%2BQ2%2Bs.csv?alt=media&token=187d3eda-38d9-4d6b-be2e-c35ed91be3fa",
+      embed: "https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/comments_embeddings.npy?alt=media&token=87cd348c-f954-49b9-8731-689421435d8b"
+    },
+    {
+      title: "neo4j",
+      tsv: "https://neo4j.kloop.io/html/insta_impichment.tsv",
+      embed: "https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/comments_embeddings.npy?alt=media&token=87cd348c-f954-49b9-8731-689421435d8b"
+    }
+  ]
 
   handleSliderChange = (event, newValue) => {
     this.setState({
@@ -444,6 +458,14 @@ class App extends Component {
 
     return (
       <div className="App">
+        <UploadData 
+          listOfUrls={this.listOfUrls} 
+          data_url={this.state.data_url}
+          embeds_url={this.state.embeds_url}
+          handleDataUrlChange={this.handleDataUrlChange}
+          handleEmbedsUrlChange={this.handleEmbedsUrlChange}
+          handleDownloadDataClick={this.handleDownloadDataClick}
+        />
         <DownloadData
           data_url={this.state.data_url}
           embeds_url={this.state.embeds_url}
