@@ -86,11 +86,6 @@ class App extends Component {
         tags: (TAGS_COL in d) ? Set(d[TAGS_COL].split(",")) : Set([]),
         negtags: (NEGTAGS_COL in d) ? Set(d[NEGTAGS_COL].split(",")) : Set([])
       });
-      // if (i !== parseInt(d[KEY_COL]) && check) {
-      //   console.log("Disorder starts", d)
-      //   console.log("Disorder starts index", i)
-      //   check = false
-      // }
       return res;
     }).then(download => {
               this.timeScale = scaleTime()

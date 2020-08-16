@@ -1,5 +1,5 @@
 import { combineReducers } from 'redux'
-import initDataReducer from '../slices/initData'
+import initDataReducer from '../Components/DownloadData/initData'
 
 export default combineReducers({
   initData: initDataReducer
