@@ -4,15 +4,17 @@ import Button from '@material-ui/core/Button';
 
 import { fetchTable } from "./initData";
 import { useDispatch } from "react-redux";
+import Mappings from "../MapData/MappingsComponent"
 
 const DownloadData = (props) => {
   const dispatch = useDispatch()
   const onDownClick = () => {
-    dispatch(fetchTable("https://neo4j.kloop.io/html/insta_impichment.tsv"))
+    dispatch(fetchTable("https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/chronosope%2Fimp_bots_comments.tsv?alt=media&token=1ce5767a-cc5a-4beb-b218-ac68dfe2486e"))
     //props.handleDownloadDataClick()
   }
     return(
         <div>
+          <Mappings />
           <TextField
             id="tsv_address"
             label="TSV Address"

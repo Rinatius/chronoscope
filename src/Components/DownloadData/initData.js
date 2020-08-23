@@ -1,16 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { tsv } from 'd3'
 
-const KEY_COL = "key"
-const DATE_COL = "created_at"
-const CONTENT_COL = "sentence"
-const ACCOUNT_COL = "account"
-const USERNAME_COL = "username"
-const TAGS_COL = "tags"
-const NEGTAGS_COL = "negtags"
+import { mappingAdded } from "../MapData/MappingsSlice"
+import { OTHER } from "../MapData/columnTypes"
 
 const initDataSlice = createSlice({
-  name: 'initData',
+  name: 'data',
   initialState: {},
   reducers: {
     tableStatusChanged(state, action) {
@@ -41,46 +36,33 @@ export const {
   allCleared
 } = initDataSlice.actions
 
-// Define a thunk that dispatches those action creators
-// export const fetchTable = (url) => async dispatch => {
-//   console.log("Fetch started.")
-//   dispatch(tableStatusChanged({
-//     status: "loading",
-//     tableName: nameFromUrl(url)
-//   }))
-//   tsv(url)
-//     .then(d => dispatch(tableAdded({
-//         table: d,
-//         tableName: nameFromUrl(url)
-//       })),
-//       d => dispatch(tableStatusChanged({
-//         status: "failed",
-//         tableName: nameFromUrl(url)
-//       })))
-// }
-
+//Define a thunk that dispatches those action creators
 export const fetchTable = (url) => async dispatch => {
   console.log("Fetch started.")
   dispatch(tableStatusChanged({
     status: "loading",
     tableName: nameFromUrl(url)
   }))
-  tsv(url, (d, i) => {
-      const res = Map({
-        key: (KEY_COL in d) ? parseInt(d[KEY_COL]) : i,
-        date: new Date(d[DATE_COL]),
-        content: d[CONTENT_COL],
-        account: d[ACCOUNT_COL],
-        username: d[USERNAME_COL],
-        tags: (TAGS_COL in d) ? Set(d[TAGS_COL].split(",")) : Set([]),
-        negtags: (NEGTAGS_COL in d) ? Set(d[NEGTAGS_COL].split(",")) : Set([])
-      });
-      return res;
-    })
-    .then(d => dispatch(tableAdded({
+  tsv(url)
+    .then(d => {
+      console.log("TSV done!")
+      dispatch(tableAdded({
         table: d,
         tableName: nameFromUrl(url)
-      })),
+      }))
+      console.log("Table added")
+      const mapping = {}
+      mapping.columns = {}
+      Object.keys(d[0]).forEach(colName => {
+        mapping.columns[colName] = {type: OTHER}
+      })
+      console.log(mapping)
+      dispatch(mappingAdded({
+        mapping: mapping,
+        mappingName: nameFromUrl(url)
+      }))
+      console.log("Mapping Added")
+      },
       d => dispatch(tableStatusChanged({
         status: "failed",
         tableName: nameFromUrl(url)

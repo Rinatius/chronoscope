@@ -1,6 +1,8 @@
 import { combineReducers } from 'redux'
 import initDataReducer from '../Components/DownloadData/initData'
+import mappingsReducer from "../Components/MapData/MappingsSlice";
 
 export default combineReducers({
-  initData: initDataReducer
+  data: initDataReducer,
+  mappings: mappingsReducer
 })

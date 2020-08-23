@@ -6,10 +6,13 @@ import { Provider } from 'react-redux';
 import './index.css';
 import App from './App';
 import registerServiceWorker from './registerServiceWorker';
-import rootReducer from './reducers';
+
+import rootReducer from "./reducers"
+import thunk from "redux-thunk";
 
 const store = configureStore({
-  reducer: rootReducer
+  reducer: rootReducer,
+  middleware: [thunk]
 });
 
 ReactDOM.render(
