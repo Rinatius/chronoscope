@@ -2,7 +2,8 @@ import React, { Component } from 'react';
 import ChartWrapper from './ChartWrapper/ChartWrapper';
 import './App.css';
 import { text, csv, tsv, scaleTime, extent, nest, timeFormat, sum, timeDays, range } from 'd3';
-import Button from '@material-ui/core/Button';
+import { Button, Grid, TextField } from '@material-ui/core';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -19,6 +20,7 @@ import FilterData from './Components/FilterData/FilterData'
 import Centroid from './Components/Centroid/Centroid'
 import TagData from './Components/TagData/TagData'
 import Charts from './Components/Charts/Charts'
+import Dropzone from './Components/UploadFile/Dropzone'
 
 
 const { List, Set, Map } = require('immutable');
@@ -54,7 +56,12 @@ class App extends Component {
     timeRange: [],
     externalToolTip: "",
     tagModeEnabled: false,
-    showCharts: false
+    showCharts: false,
+    file: null,
+    snackbarOpen: false,
+    initialImage: null,
+    APIRadius: 0.93,
+    spinner: false
   }
 
   handleSliderChange = (event, newValue) => {
@@ -340,6 +347,62 @@ class App extends Component {
     this.setState({externalToolTip: dataIndex})
   }
 
+
+  // Photo methods start
+
+  handleFileChange = (file) => {
+    console.log(file)
+    this.setState({file: file})
+  }
+
+  handleSnackbarClick = () => {
+    this.setState({snackbarOpen: true})
+  };
+
+  setInitial = (initialImage) => {
+    this.setState({initialImage: initialImage})
+  };
+
+  handleAPIRadiusChange = (event) => {
+    this.setState({APIRadius: event.target.value})
+  };
+
+  handlePostData = async () => {
+    if (!this.state.file) {
+      alert("No file to upload")
+      return 0
+    }
+    this.setState({spinner: true})
+    console.log("Sending data")
+    const formData = new FormData();
+
+    formData.append('token', 'TDlRJi8ORMGVrMedVkZDXsUDK')
+    formData.append('action', 'faiss_search')
+    formData.append('radius', this.state.APIRadius)
+    formData.append('with_embeddings', 'False')
+    formData.append('file1', this.state.file, 'image.jpg');
+
+
+    try {
+      const response = await fetch('https://lukoshkoapi.kloop.io:5000/', {
+        method: 'POST',
+        body: formData
+      });
+      let result = await response.json();
+      //setData(result)
+      console.log(result)
+      this.setState({spinner: false})
+      //sortData(result)
+
+    } catch (error) {
+      console.error('Ошибка:', error);
+      alert('Ошибка:', error)
+      this.setState({spinner: false})
+    }
+  }
+
+  // Photo methods end
+
   componentDidUpdate(prevProps, prevState) {
     // Don't forget to compare states
     if (prevState && prevState.prepareDownload) {
@@ -367,7 +430,7 @@ class App extends Component {
         timeRange={this.state.timeRange}
         nestedPercentData={this.state.nestedPercentData}
         slider={this.state.slider}
-        handleSliderChange={this.handleSliderChangeo}
+        handleSliderChange={this.handleSliderChange}
         handleSliderCommitted={this.handleSliderCommitted}
         handleNestDataClick={this.handleNestDataClick}
         handleExternalToolTip={this.handleExternalToolTip}
@@ -375,19 +438,57 @@ class App extends Component {
     }
 
     return (
-      <div className="App">
-        <DownloadData
-          data_url={this.state.data_url}
-          embeds_url={this.state.embeds_url}
-          handleDataUrlChange={this.handleDataUrlChange}
-          handleEmbedsUrlChange={this.handleEmbedsUrlChange}
-          handleDownloadDataClick={this.handleDownloadDataClick}/>
-        <FilterData
-          reges={this.state.regex}
-          tagSelector={this.state.tagSelector}
-          handleRegexTextChange={this.handleRegexTextChange}
-          handleTagSelectorTextChange={this.handleTagSelectorTextChange}
-          handleFilterClick={this.handleFilterClick}/>
+        <div className="App">
+
+          <Grid container direction="column" alignItems="center" justify="center">
+            <Grid container justify="center">
+              <Dropzone handleChange={this.handleFileChange}
+                        handleClick={this.handleSnackbarClick}
+                        setImage={this.setInitial}/>
+            </Grid>
+            {/* <Grid container justify="center" className={classes.gridItem}><UploadEmbed handleChange={handleEmbedChange} value={embed}/></Grid> */}
+            <Grid container justify="center">
+              {this.state.initialImage ?
+                  <img src={this.state.initialImage} alt="initial_image" style={{height: 300}}/>
+                  :
+                  null
+              }
+            </Grid>
+            <Grid container justify="center">
+              <TextField variant="outlined"
+                         id="radius"
+                         size="small"
+                         label="Radius"
+                         value={this.state.APIRadius}
+                         onChange={this.handleAPIRadiusChange}/>
+              <Button variant="contained"
+                      size="small"
+                      onClick={() => this.handlePostData()}>Send Data</Button>
+              <div>
+                {this.state.spinner ?
+                    <CircularProgress size={32} style={{color: 'grey'}}/>
+                    :
+                    null
+                }
+              </div>
+            </Grid>
+            {/*<Grid container justify="center">*/}
+            {/*  {sortedMetadata ? <CSVLink data={sortedMetadata} separator={"\t"}>Download TSV</CSVLink> : null}*/}
+            {/*</Grid>*/}
+          </Grid>
+
+        {/*<DownloadData*/}
+        {/*  data_url={this.state.data_url}*/}
+        {/*  embeds_url={this.state.embeds_url}*/}
+        {/*  handleDataUrlChange={this.handleDataUrlChange}*/}
+        {/*  handleEmbedsUrlChange={this.handleEmbedsUrlChange}*/}
+        {/*  handleDownloadDataClick={this.handleDownloadDataClick}/>*/}
+        {/*<FilterData*/}
+        {/*  reges={this.state.regex}*/}
+        {/*  tagSelector={this.state.tagSelector}*/}
+        {/*  handleRegexTextChange={this.handleRegexTextChange}*/}
+        {/*  handleTagSelectorTextChange={this.handleTagSelectorTextChange}*/}
+        {/*  handleFilterClick={this.handleFilterClick}/>*/}
         <Centroid
           maxKDRadius={this.state.maxKDRadius}
           handleCalculateCentroidClick={this.handleCalculateCentroidClick}
