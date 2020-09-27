@@ -22,6 +22,7 @@ import Centroid from './Components/Centroid/Centroid'
 import TagData from './Components/TagData/TagData'
 import Charts from './Components/Charts/Charts'
 import Dropzone from './Components/UploadFile/Dropzone'
+import ImgGrid from "./Components/ImgGrid/ImgGrid";
 
 
 const { List, Set, Map } = require('immutable');
@@ -600,39 +601,8 @@ class App extends Component {
         {/*    </Table>*/}
         {/*  </TableContainer>*/}
           {/*</BigTable>*/}
-          <Grid container justifyContent="center" spacing={2}>
-            {this.state.filteredData.map(img_data => (
-                <Grid item>
-                  <Card style={{maxWidth: 400}}>
-                    <CardActionArea>
-                      <CardMedia
-                          style={{height: 300}}
-                          image={img_data.url}
-                          title="Contemplative Reptile"
-                      />
-                      <CardContent>
-                        <Typography gutterBottom variant="h5" component="h2">
-                          Lizard
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary" component="p">
-                          Lizards are a widespread group of squamate reptiles, with over 6,000 species, ranging
-                          across all continents except Antarctica
-                        </Typography>
-                      </CardContent>
-                    </CardActionArea>
-                    <CardActions>
-                      <Button size="small" color="primary">
-                        Share
-                      </Button>
-                      <Button size="small" color="primary">
-                        Learn More
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </Grid>
-            ))}
-          </Grid>
 
+          <ImgGrid data={this.state.filteredData} />
         </div>
     );
   }
