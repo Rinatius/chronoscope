@@ -1,23 +1,10 @@
 import React, { Component } from 'react';
-import ChartWrapper from './ChartWrapper/ChartWrapper';
 import './App.css';
 import { text, csv, tsv, scaleTime, extent, nest, timeFormat, sum, timeDays, range } from 'd3';
-import { Button, Grid, TextField, Card, CardActionArea, CardActions, CardContent, CardMedia, Typography} from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import { makeStyles } from '@material-ui/core/styles';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
-import BigTable from "./BigTable/BigTable";
+import { Button, Grid, TextField, CircularProgress } from '@material-ui/core';
+
 import { CSVDownload } from "react-csv";
-import {createConditionalNode, mean} from "mathjs";
 import { fromArrayBuffer } from "numpy-parser";
-import DownloadData from './Components/DownloadData/DownloadData'
-import FilterData from './Components/FilterData/FilterData'
 import Centroid from './Components/Centroid/Centroid'
 import TagData from './Components/TagData/TagData'
 import Charts from './Components/Charts/Charts'
@@ -39,15 +26,6 @@ const ACCOUNT_COL = "account"
 const USERNAME_COL = "username"
 const TAGS_COL = "tags"
 const NEGTAGS_COL = "negtags"
-
-const classes = makeStyles({
-  root: {
-    maxWidth: 345,
-  },
-  media: {
-    height: 140,
-  },
-});
 
 
 class App extends Component {
@@ -497,7 +475,6 @@ class App extends Component {
                         handleClick={this.handleSnackbarClick}
                         setImage={this.setInitial}/>
             </Grid>
-            {/* <Grid container justify="center" className={classes.gridItem}><UploadEmbed handleChange={handleEmbedChange} value={embed}/></Grid> */}
             <Grid container justify="center">
               {this.state.initialImage ?
                   <img src={this.state.initialImage} alt="initial_image" style={{height: 300}}/>
@@ -523,23 +500,8 @@ class App extends Component {
                 }
               </div>
             </Grid>
-            {/*<Grid container justify="center">*/}
-            {/*  {sortedMetadata ? <CSVLink data={sortedMetadata} separator={"\t"}>Download TSV</CSVLink> : null}*/}
-            {/*</Grid>*/}
           </Grid>
 
-        {/*<DownloadData*/}
-        {/*  data_url={this.state.data_url}*/}
-        {/*  embeds_url={this.state.embeds_url}*/}
-        {/*  handleDataUrlChange={this.handleDataUrlChange}*/}
-        {/*  handleEmbedsUrlChange={this.handleEmbedsUrlChange}*/}
-        {/*  handleDownloadDataClick={this.handleDownloadDataClick}/>*/}
-        {/*<FilterData*/}
-        {/*  reges={this.state.regex}*/}
-        {/*  tagSelector={this.state.tagSelector}*/}
-        {/*  handleRegexTextChange={this.handleRegexTextChange}*/}
-        {/*  handleTagSelectorTextChange={this.handleTagSelectorTextChange}*/}
-        {/*  handleFilterClick={this.handleFilterClick}/>*/}
         <Centroid
           maxKDRadius={this.state.maxKDRadius}
           handleCalculateCentroidClick={this.handleCalculateCentroidClick}
@@ -557,50 +519,8 @@ class App extends Component {
           Download Modified Data
         </Button>
         {exportDownload}
-        {/*<CSVLink data={this.state.data.toJS()} separator={"\t"}>
-          Download me
-        </CSVLink>*/}
-        {/*<ChartWrapper />*/}
         <Button onClick={this.handleShowCharts}>Show charts</Button>
         {charts}
-
-
-
-        {/*<BigTable bigArray={this.state.filteredData}>*/}
-        {/*  <TableContainer component={Paper}>*/}
-        {/*    <Table aria-label="simple table">*/}
-        {/*      <TableHead>*/}
-        {/*        <TableRow>*/}
-        {/*          <TableCell>Content</TableCell>*/}
-        {/*          <TableCell align="left">Account</TableCell>*/}
-        {/*          <TableCell align="left">User</TableCell>*/}
-        {/*          <TableCell align="left">Tags</TableCell>*/}
-        {/*          <TableCell align="left">Ntags</TableCell>*/}
-        {/*          <TableCell align="left">Date</TableCell>*/}
-        {/*        </TableRow>*/}
-        {/*      </TableHead>*/}
-        {/*      <TableBody>*/}
-        {/*        {this.state.filteredData.map((row, index) => (*/}
-        {/*          <TableRow*/}
-        {/*            key={row.get("key")}*/}
-        {/*            onClick={() => this.handleRowRemoval(index)}*/}
-        {/*          >*/}
-        {/*            <TableCell align="left">{row.get("content")}</TableCell>*/}
-        {/*            <TableCell align="left">{row.get("account")}</TableCell>*/}
-        {/*            <TableCell align="left">{row.get("username")}</TableCell>*/}
-        {/*            <TableCell>{JSON.stringify(row.get("tags"))}</TableCell>*/}
-        {/*            <TableCell>{JSON.stringify(row.get("negtags"))}</TableCell>*/}
-        {/*            <TableCell align="left">*/}
-        {/*              {row.get("date").getFullYear()}/*/}
-        {/*              {row.get("date").getMonth()}/*/}
-        {/*              {row.get("date").getDate()}*/}
-        {/*            </TableCell>*/}
-        {/*          </TableRow>*/}
-        {/*        ))}*/}
-        {/*      </TableBody>*/}
-        {/*    </Table>*/}
-        {/*  </TableContainer>*/}
-          {/*</BigTable>*/}
 
           <ImgGrid data={this.state.filteredData} />
         </div>
