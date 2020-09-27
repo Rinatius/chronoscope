@@ -2,8 +2,9 @@ import React, { Component } from 'react';
 import ChartWrapper from './ChartWrapper/ChartWrapper';
 import './App.css';
 import { text, csv, tsv, scaleTime, extent, nest, timeFormat, sum, timeDays, range } from 'd3';
-import { Button, Grid, TextField } from '@material-ui/core';
+import { Button, Grid, TextField, Card, CardActionArea, CardActions, CardContent, CardMedia, Typography} from '@material-ui/core';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import { makeStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -29,6 +30,23 @@ const ndarray = require("ndarray")
 const pool = require("ndarray-scratch")
 const ops = require("ndarray-ops")
 
+
+const KEY_COL = "key"
+const DATE_COL = "created_at"
+const CONTENT_COL = "sentence"
+const ACCOUNT_COL = "account"
+const USERNAME_COL = "username"
+const TAGS_COL = "tags"
+const NEGTAGS_COL = "negtags"
+
+const classes = makeStyles({
+  root: {
+    maxWidth: 345,
+  },
+  media: {
+    height: 140,
+  },
+});
 
 
 class App extends Component {
@@ -71,18 +89,28 @@ class App extends Component {
   };
 
   downloadData = () => {
+    let check = true
     tsv(this.state.data_url, (d, i) => {
-      return Map({
-        key: i,
-        date: new Date(d.date),
-        sentence: d.sentence,
-        tags: Set(d.tags.split(",")),
-        negtags: ("negtags" in d) ? Set(d.negtags.split(",")) : Set([])
+      const res = Map({
+        key: (KEY_COL in d) ? parseInt(d[KEY_COL]) : i,
+        date: new Date(d[DATE_COL]),
+        content: d[CONTENT_COL],
+        account: d[ACCOUNT_COL],
+        username: d[USERNAME_COL],
+        tags: (TAGS_COL in d) ? Set(d[TAGS_COL].split(",")) : Set([]),
+        negtags: (NEGTAGS_COL in d) ? Set(d[NEGTAGS_COL].split(",")) : Set([])
       });
+      // if (i !== parseInt(d[KEY_COL]) && check) {
+      //   console.log("Disorder starts", d)
+      //   console.log("Disorder starts index", i)
+      //   check = false
+      // }
+      return res;
     }).then(download => {
               this.timeScale = scaleTime()
                   .domain(extent(download, d => d.get("date").getTime()))
                   .range([0, 100])
+              console.log("Array Length", download.length)
               //let filtered = this.timeFilter(download, this.state.slider)
               this.setState({data: List(download)});
     });
@@ -125,7 +153,7 @@ class App extends Component {
     let filtered = []
     if (this.state.regex.length > 0) {
       let re = new RegExp(this.state.regex, "i");
-      filtered = this.state.data.filter(d => (re.test(d.get("sentence"))));
+      filtered = this.state.data.filter(d => (re.test(d.get("content"))));
     } else {
       filtered = this.state.data
     }
@@ -389,10 +417,32 @@ class App extends Component {
         body: formData
       });
       let result = await response.json();
-      //setData(result)
       console.log(result)
+      const img_data = []
+      result.forEach(r => {
+            const data = []
+            Object.values(r.metadata).forEach(v => {
+              const img = {
+                key: v.file_path + v.frame_index.toString() + JSON.stringify(v.object_box),
+                date: new Date(v.appearance_time),
+                url: ("https://kloopstorage.blob.core.windows.net/activ-sync/" +
+                    v.file_path.split("/")[3] +
+                    "/" +
+                    v.file_path.split("/")[4].replace(":", ".") +
+                    "/" +
+                    v.frame_index.toString() +
+                    ".jpg"),
+                distance: v.distance,
+                tags: [],
+                negtags: []
+              }
+              data.push(img)
+            })
+            img_data.push(...data)
+          })
+      console.log(img_data)
+      this.setState({filteredData: img_data})
       this.setState({spinner: false})
-      //sortData(result)
 
     } catch (error) {
       console.error('Ошибка:', error);
@@ -512,38 +562,78 @@ class App extends Component {
         {/*<ChartWrapper />*/}
         <Button onClick={this.handleShowCharts}>Show charts</Button>
         {charts}
-        <BigTable bigArray={this.state.filteredData}>
-          <TableContainer component={Paper}>
-            <Table aria-label="simple table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Sentence</TableCell>
-                  <TableCell align="left">Tags</TableCell>
-                  <TableCell align="left">Negtags</TableCell>
-                  <TableCell align="left">Date</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {this.state.filteredData.map((row, index) => (
-                  <TableRow
-                    key={row.get("key")}
-                    onClick={() => this.handleRowRemoval(index)}
-                  >
-                    <TableCell align="left">{row.get("sentence")}</TableCell>
-                    <TableCell>{JSON.stringify(row.get("tags"))}</TableCell>
-                    <TableCell>{JSON.stringify(row.get("negtags"))}</TableCell>
-                    <TableCell align="left">
-                      {row.get("date").getFullYear()}/
-                      {row.get("date").getMonth()}/
-                      {row.get("date").getDate()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </BigTable>
-      </div>
+
+
+
+        {/*<BigTable bigArray={this.state.filteredData}>*/}
+        {/*  <TableContainer component={Paper}>*/}
+        {/*    <Table aria-label="simple table">*/}
+        {/*      <TableHead>*/}
+        {/*        <TableRow>*/}
+        {/*          <TableCell>Content</TableCell>*/}
+        {/*          <TableCell align="left">Account</TableCell>*/}
+        {/*          <TableCell align="left">User</TableCell>*/}
+        {/*          <TableCell align="left">Tags</TableCell>*/}
+        {/*          <TableCell align="left">Ntags</TableCell>*/}
+        {/*          <TableCell align="left">Date</TableCell>*/}
+        {/*        </TableRow>*/}
+        {/*      </TableHead>*/}
+        {/*      <TableBody>*/}
+        {/*        {this.state.filteredData.map((row, index) => (*/}
+        {/*          <TableRow*/}
+        {/*            key={row.get("key")}*/}
+        {/*            onClick={() => this.handleRowRemoval(index)}*/}
+        {/*          >*/}
+        {/*            <TableCell align="left">{row.get("content")}</TableCell>*/}
+        {/*            <TableCell align="left">{row.get("account")}</TableCell>*/}
+        {/*            <TableCell align="left">{row.get("username")}</TableCell>*/}
+        {/*            <TableCell>{JSON.stringify(row.get("tags"))}</TableCell>*/}
+        {/*            <TableCell>{JSON.stringify(row.get("negtags"))}</TableCell>*/}
+        {/*            <TableCell align="left">*/}
+        {/*              {row.get("date").getFullYear()}/*/}
+        {/*              {row.get("date").getMonth()}/*/}
+        {/*              {row.get("date").getDate()}*/}
+        {/*            </TableCell>*/}
+        {/*          </TableRow>*/}
+        {/*        ))}*/}
+        {/*      </TableBody>*/}
+        {/*    </Table>*/}
+        {/*  </TableContainer>*/}
+          {/*</BigTable>*/}
+          <Grid container justifyContent="center" spacing={2}>
+            {this.state.filteredData.map(img_data => (
+                <Grid item>
+                  <Card style={{maxWidth: 400}}>
+                    <CardActionArea>
+                      <CardMedia
+                          style={{height: 300}}
+                          image={img_data.url}
+                          title="Contemplative Reptile"
+                      />
+                      <CardContent>
+                        <Typography gutterBottom variant="h5" component="h2">
+                          Lizard
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" component="p">
+                          Lizards are a widespread group of squamate reptiles, with over 6,000 species, ranging
+                          across all continents except Antarctica
+                        </Typography>
+                      </CardContent>
+                    </CardActionArea>
+                    <CardActions>
+                      <Button size="small" color="primary">
+                        Share
+                      </Button>
+                      <Button size="small" color="primary">
+                        Learn More
+                      </Button>
+                    </CardActions>
+                  </Card>
+                </Grid>
+            ))}
+          </Grid>
+
+        </div>
     );
   }
 }
