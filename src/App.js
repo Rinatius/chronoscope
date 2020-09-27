@@ -10,6 +10,7 @@ import TagData from './Components/TagData/TagData'
 import Charts from './Components/Charts/Charts'
 import Dropzone from './Components/UploadFile/Dropzone'
 import ImgGrid from "./Components/ImgGrid/ImgGrid";
+import getImgsFromImg from './lukoshko/api'
 
 
 const { List, Set, Map } = require('immutable');
@@ -381,53 +382,9 @@ class App extends Component {
     }
     this.setState({spinner: true})
     console.log("Sending data")
-    const formData = new FormData();
-
-    formData.append('token', 'TDlRJi8ORMGVrMedVkZDXsUDK')
-    formData.append('action', 'faiss_search')
-    formData.append('radius', this.state.APIRadius)
-    formData.append('with_embeddings', 'False')
-    formData.append('file1', this.state.file, 'image.jpg');
-
-
-    try {
-      const response = await fetch('https://lukoshkoapi.kloop.io:5000/', {
-        method: 'POST',
-        body: formData
-      });
-      let result = await response.json();
-      console.log(result)
-      const img_data = []
-      result.forEach(r => {
-            const data = []
-            Object.values(r.metadata).forEach(v => {
-              const img = {
-                key: v.file_path + v.frame_index.toString() + JSON.stringify(v.object_box),
-                date: new Date(v.appearance_time),
-                url: ("https://kloopstorage.blob.core.windows.net/activ-sync/" +
-                    v.file_path.split("/")[3] +
-                    "/" +
-                    v.file_path.split("/")[4].replace(":", ".") +
-                    "/" +
-                    v.frame_index.toString() +
-                    ".jpg"),
-                distance: v.distance,
-                tags: [],
-                negtags: []
-              }
-              data.push(img)
-            })
-            img_data.push(...data)
-          })
-      console.log(img_data)
-      this.setState({filteredData: img_data})
-      this.setState({spinner: false})
-
-    } catch (error) {
-      console.error('Ошибка:', error);
-      alert('Ошибка:', error)
-      this.setState({spinner: false})
-    }
+    const data = await getImgsFromImg(this.state.file, this.state.APIRadius)
+    this.setState({filteredData: data})
+    this.setState({spinner: false})
   }
 
   // Photo methods end
@@ -502,27 +459,27 @@ class App extends Component {
             </Grid>
           </Grid>
 
-        <Centroid
-          maxKDRadius={this.state.maxKDRadius}
-          handleCalculateCentroidClick={this.handleCalculateCentroidClick}
-          handleRadiusChange={this.handleRadiusChange}
-          handleNNSearchClick={this.handleNNSearchClick}/>
-        <TagData
-          tagModeEnabled={this.state.tagModeEnabled}
-          tag={this.state.tag}
-          handleTagTextChange={this.handleTagTextChange}
-          handleTagClick={this.handleTagClick}
-          handleTagModeChange={this.handleTagModeChange}/>
-        <Button
-          variant="contained"
-          onClick={this.handleGetDataClick}>
-          Download Modified Data
-        </Button>
-        {exportDownload}
-        <Button onClick={this.handleShowCharts}>Show charts</Button>
-        {charts}
+          <Centroid
+              maxKDRadius={this.state.maxKDRadius}
+              handleCalculateCentroidClick={this.handleCalculateCentroidClick}
+              handleRadiusChange={this.handleRadiusChange}
+              handleNNSearchClick={this.handleNNSearchClick}/>
+          <TagData
+              tagModeEnabled={this.state.tagModeEnabled}
+              tag={this.state.tag}
+              handleTagTextChange={this.handleTagTextChange}
+              handleTagClick={this.handleTagClick}
+              handleTagModeChange={this.handleTagModeChange}/>
+          <Button
+              variant="contained"
+              onClick={this.handleGetDataClick}>
+            Download Modified Data
+          </Button>
+          {exportDownload}
+          <Button onClick={this.handleShowCharts}>Show charts</Button>
+          {charts}
 
-          <ImgGrid data={this.state.filteredData} />
+          <ImgGrid data={this.state.filteredData}/>
         </div>
     );
   }
