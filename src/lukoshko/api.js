@@ -1,3 +1,5 @@
+import { List, Set, Map } from 'immutable';
+
 const TOKEN = 'TDlRJi8ORMGVrMedVkZDXsUDK'
 
 const getImgsFromImg = async (img, radius) => {
@@ -10,18 +12,17 @@ const getImgsFromImg = async (img, radius) => {
     formData.append('file1', img, 'image.jpg');
 
     try {
-      const response = await fetch('https://lukoshkoapi.kloop.io:5000/', {
-        method: 'POST',
-        body: formData
-      });
-      let result = await response.json();
-      console.log(result)
-      const img_data = []
-      result.forEach(r => {
-            const data = []
-            Object.values(r.metadata).forEach(v => {
-              const img = {
-                key: v.file_path + v.frame_index.toString() + JSON.stringify(v.object_box),
+        const response = await fetch('https://lukoshkoapi.kloop.io:5000/', {
+            method: 'POST',
+            body: formData
+        });
+        let result = await response.json();
+        console.log(result)
+
+        const data = []
+        Object.values(result[0].metadata).forEach((v, i) => {
+            const img = Map({
+                key: i,
                 date: new Date(v.appearance_time),
                 url: ("https://kloopstorage.blob.core.windows.net/activ-sync/" +
                     v.file_path.split("/")[3] +
@@ -31,19 +32,18 @@ const getImgsFromImg = async (img, radius) => {
                     v.frame_index.toString() +
                     ".jpg"),
                 distance: v.distance,
-                tags: [],
-                negtags: []
-              }
-              data.push(img)
+                tags: Set(['Check']),
+                negtags: Set(['fjwfeiji', 'dijwidj', 'wkfjjwfj'])
             })
-            img_data.push(...data)
-          })
-      console.log(img_data)
-      return img_data
+            data.push(img)
+        })
+
+        console.log(data)
+        return List(data)
 
     } catch (error) {
-      console.error('Ошибка:', error);
-      alert('Ошибка:', error)
+        console.error('Ошибка:', error);
+        alert('Ошибка:', error)
     }
 }
 

@@ -6,29 +6,33 @@ import React from "react";
 
 const ImgGrid = (props) => (
     <Grid container justifyContent="center" spacing={2}>
-        {props.data.map(img_data => (
-            <Grid item>
-                <Card style={{maxWidth: 400}}>
+        {props.data.map((img_data, i) => (
+            <Grid item key={img_data.get('key')}>
+                <Card style={{width: 400}}>
                     <CardActionArea>
                         <CardMedia
                             style={{height: 300}}
-                            image={img_data.url}
+                            image={img_data.get('url')}
                         />
                         <CardContent>
                             <Typography gutterBottom variant="h5" component="h2">
-                                {img_data.distance.toFixed(2) + " " + img_data.date.toISOString()}
+                                {img_data.get('tags')}
+                                {/*{img_data.get('distance').toFixed(2) + " " + img_data.get('date').toISOString()}*/}
                             </Typography>
                             <Typography variant="body2" color="textSecondary" component="p">
-                                Lizards are a widespread group of squamate reptiles, with over 6,000 species, ranging
-                                across all continents except Antarctica
+                                {img_data.get('negtags')}
                             </Typography>
                         </CardContent>
                     </CardActionArea>
                     <CardActions>
-                        <Button size="medium" color="primary">
+                        <Button size="medium"
+                                color="primary"
+                                onClick={() => props.tagClick('tag', i)}>
                             TAG
                         </Button>
-                        <Button size="medium" color="primary">
+                        <Button size="medium"
+                                color="primary"
+                                onClick={() => props.tagClick('negtag', i)}>
                             NEGTAG
                         </Button>
                     </CardActions>

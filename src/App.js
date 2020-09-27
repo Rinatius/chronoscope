@@ -13,7 +13,7 @@ import ImgGrid from "./Components/ImgGrid/ImgGrid";
 import getImgsFromImg from './lukoshko/api'
 
 
-const { List, Set, Map } = require('immutable');
+const { List, Set, Map, fromJS } = require('immutable');
 const createKDTree = require('static-kdtree');
 const ndarray = require("ndarray")
 const pool = require("ndarray-scratch")
@@ -32,7 +32,6 @@ const NEGTAGS_COL = "negtags"
 class App extends Component {
 
   state = {
-    slider: [0, 100],
     data_url: "https://firebasestorage.googleapis.com/v0/b/newagent-b0720.appspot.com/o/nuk%2BQ2%2Bs.csv?alt=media&token=187d3eda-38d9-4d6b-be2e-c35ed91be3fa",
     regex: "",
     data: List([]),
@@ -61,12 +60,6 @@ class App extends Component {
     APIRadius: 0.93,
     spinner: false
   }
-
-  handleSliderChange = (event, newValue) => {
-    this.setState({
-      slider: newValue
-    });
-  };
 
   downloadData = () => {
     let check = true
@@ -129,13 +122,17 @@ class App extends Component {
     return result
   }
 
-  allFilter = () => {
-    let filtered = []
+  allFilter = (data=null) => {
+    let dataToFilter = data
+    if (!dataToFilter) {
+      dataToFilter = this.state.data
+    }
+    let filtered
     if (this.state.regex.length > 0) {
       let re = new RegExp(this.state.regex, "i");
-      filtered = this.state.data.filter(d => (re.test(d.get("content"))));
+      filtered = dataToFilter.filter(d => (re.test(d.get("content"))));
     } else {
-      filtered = this.state.data
+      filtered = dataToFilter
     }
     if (this.state.tagSelector.length > 0) {
       filtered = filtered.filter(d => d.get("tags").includes(this.state.tagSelector));
@@ -148,35 +145,53 @@ class App extends Component {
     })
   };
 
-  tag = () => {
-    let data = this.state.data;
-    let exclude = this.state.exclude;
-    let filtered = this.state.filteredData.map(row => {
-      if (!(exclude.includes(row.get("key")))) {
-        row = row.update("tags", d => d.add(this.state.tag))
-        data = data.set(row.get("key"), row)
-        return row
-      }
-    })
-    this.setState({
-      data: data,
-      filteredData: filtered
-    })
-  }
-
-  removeRow = (index) => {
+  tagAll = (action) => {
     if (this.state.tag !== "") {
       let data = this.state.data;
-      let row = this.state.filteredData.get(index);
-      row = row.update("negtags", d => d.add(this.state.tag))
+      this.state.filteredData.forEach((d, i) => {
+        d = this.getUpdatedTags(action,
+            this.state.filteredData.get(i),
+            this.state.tag)
+        data = data.set(d.get("key"), d)
+      })
+      this.setState({data: data})
+      this.allFilter(this.state.filteredData.map(d => data.get(d.get("key"))))
+    } else {
+      alert('Fill TAG field')
+    }
+  }
+
+  tagRow = (action, index) => {
+    if (this.state.tag !== "") {
+      let data = this.state.data;
+      const row = this.getUpdatedTags(action,
+          this.state.filteredData.get(index),
+          this.state.tag)
       data = data.set(row.get("key"), row)
+
       this.setState({
         data: data
       })
+      this.setState({
+        filteredData: data
+      })
+      this.setState({
+        filteredData: this.state.filteredData.delete(index)
+      })
+    } else {
+      alert('Fill TAG field')
     }
-    this.setState({
-      filteredData: this.state.filteredData.delete(index)
-    })
+  }
+
+  getUpdatedTags = (action, row, tag) => {
+    if (action === 'tag') {
+      row = row.update("tags", d => d.add(tag))
+      row = row.update("negtags", d => d.delete(tag))
+    } else if (action === 'negtag') {
+      row = row.update("negtags", d => d.add(tag))
+      row = row.update("tags", d => d.delete(tag))
+    }
+    return row;
   }
 
   timeFilter = (data, interval) => {
@@ -307,12 +322,12 @@ class App extends Component {
     this.calculateCentroid();
   };
 
-  handleTagClick = () => {
-    this.tag();
+  handleTagClick = (action) => {
+    this.tagAll(action);
   };
 
-  handleRowRemoval = (index) => {
-    this.removeRow(index);
+  handleRowRemoval = (action, index) => {
+    this.tagRow(action, index);
   };
 
   handleGetDataClick = () => {
@@ -383,7 +398,8 @@ class App extends Component {
     this.setState({spinner: true})
     console.log("Sending data")
     const data = await getImgsFromImg(this.state.file, this.state.APIRadius)
-    this.setState({filteredData: data})
+    this.setState({data: data})
+    this.allFilter()
     this.setState({spinner: false})
   }
 
@@ -459,27 +475,27 @@ class App extends Component {
             </Grid>
           </Grid>
 
-          <Centroid
-              maxKDRadius={this.state.maxKDRadius}
-              handleCalculateCentroidClick={this.handleCalculateCentroidClick}
-              handleRadiusChange={this.handleRadiusChange}
-              handleNNSearchClick={this.handleNNSearchClick}/>
+          {/*<Centroid*/}
+          {/*    maxKDRadius={this.state.maxKDRadius}*/}
+          {/*    handleCalculateCentroidClick={this.handleCalculateCentroidClick}*/}
+          {/*    handleRadiusChange={this.handleRadiusChange}*/}
+          {/*    handleNNSearchClick={this.handleNNSearchClick}/>*/}
           <TagData
               tagModeEnabled={this.state.tagModeEnabled}
               tag={this.state.tag}
               handleTagTextChange={this.handleTagTextChange}
               handleTagClick={this.handleTagClick}
               handleTagModeChange={this.handleTagModeChange}/>
-          <Button
-              variant="contained"
-              onClick={this.handleGetDataClick}>
-            Download Modified Data
-          </Button>
-          {exportDownload}
+          {/*<Button*/}
+          {/*    variant="contained"*/}
+          {/*    onClick={this.handleGetDataClick}>*/}
+          {/*  Download Modified Data*/}
+          {/*</Button>*/}
+          {/*{exportDownload}*/}
           <Button onClick={this.handleShowCharts}>Show charts</Button>
           {charts}
 
-          <ImgGrid data={this.state.filteredData}/>
+          <ImgGrid data={this.state.filteredData} tagClick={this.handleRowRemoval}/>
         </div>
     );
   }
