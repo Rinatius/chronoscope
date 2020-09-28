@@ -32,8 +32,8 @@ const getImgsFromImg = async (img, radius) => {
                     v.frame_index.toString() +
                     ".jpg"),
                 distance: v.distance,
-                tags: Set(['Check']),
-                negtags: Set(['fjwfeiji', 'dijwidj', 'wkfjjwfj'])
+                tags: Set([]),
+                negtags: Set([])
             })
             data.push(img)
         })
