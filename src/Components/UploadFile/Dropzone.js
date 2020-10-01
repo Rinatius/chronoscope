@@ -58,9 +58,9 @@ const Dropzone = (props) => {
 	<section className="container" style={{width: '100%'}}>
 	  <div {...getRootProps({style})}>
 		<input {...getInputProps()} />
-		<p>Drag 'n' drop some files here, or click to select files</p>
+		<p>Перетащите фото с одним лицом сюда или нажмите для выбора файла.</p>
 		<button type="button" onClick={open}>
-          Open File Dialog
+          Выбрать файл
         </button>
 	  </div>
 	</section>

@@ -45,15 +45,7 @@ const tagData = (props) => {
                                      onChange={props.handleTagModeChange}/>}
                     label="Hide (neg)tagged"
                 /></Grid>
-                <Grid item> <FormControlLabel
-                    control={<Switch checked={props.autoDiscoveryMode}
-                                     onChange={props.handleAutoDiscoveryModeChange}/>}
-                    label="Auto discovery"
-                /></Grid>
-                <Grid item> <FormControlLabel
-                    control={<Switch />}
-                    label="Auto tagging"
-                /></Grid>
+
             </Grid>
         </div>
 

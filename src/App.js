@@ -11,6 +11,8 @@ import Charts from './Components/Charts/Charts';
 import Dropzone from './Components/UploadFile/Dropzone';
 import ImgGrid from "./Components/ImgGrid/ImgGrid";
 import getImgsFromImg from './lukoshko/api';
+import Switch from "@material-ui/core/Switch";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
 
 class App extends Component {
 
@@ -30,9 +32,10 @@ class App extends Component {
     file: null,
     snackbarOpen: false,
     initialImage: null,
-    APIRadius: 0.93,
+    APIRadius: 0.7,
     spinner: false,
-    autoDiscovery: false
+    autoDiscovery: false,
+    showAdvanced: false
   }
 
   excludeTagNegtag = (data) => {
@@ -217,6 +220,12 @@ class App extends Component {
     });
   };
 
+  handleShowAdvancedChange = (event) => {
+    this.setState({
+      showAdvanced: event.target.checked
+    });
+  };
+
   handleShowCharts = () => {
     const charts = this.state.showCharts
     console.log(charts)
@@ -303,42 +312,57 @@ class App extends Component {
                   null
               }
             </Grid>
-            <Grid container justify="center">
+            <p />
+            <Grid container justify="center" spacing={2}>
+              <Grid item>
               <TextField variant="outlined"
                          id="radius"
                          size="small"
-                         label="Radius"
+                         label="Схожесть лица"
                          value={this.state.APIRadius}
                          onChange={this.handleAPIRadiusChange}/>
+              </Grid>
+              <Grid item>
               <Button variant="contained"
                       size="small"
-                      onClick={() => this.handlePostData()}>Send Data</Button>
-              <div>
+                      onClick={() => this.handlePostData()}>Найти похожие лица</Button>
+              </Grid>
+              <Grid item>
                 {this.state.spinner ?
                     <CircularProgress size={32} style={{color: 'grey'}}/>
                     :
                     null
                 }
-              </div>
+              </Grid>
+              <Grid item>
+                <FormControlLabel
+                    control={<Switch checked={this.state.showAdvanced}
+                                     onChange={this.handleShowAdvancedChange}/>}
+                    label="Продвинутые настройки"
+                />
+              </Grid>
+
             </Grid>
           </Grid>
-
-          <TagData
-              tagModeEnabled={this.state.tagModeEnabled}
-              autoDiscoveryMode={this.state.autoDiscovery}
-              tag={this.state.tag}
-              filter={this.handleFilterClick}
-              handleTagTextChange={this.handleTagTextChange}
-              handleTagClick={this.handleTagClick}
-              handleTagModeChange={this.handleTagModeChange}
-              handleAutoDiscoveryModeChange={this.handleAutoDiscoveryModeChange}/>
-
-          <Button onClick={this.handleShowCharts}>Show charts</Button>
-          {charts}
+          <p />
+          {this.state.showAdvanced &&
+            <div>
+              <TagData justify="center"
+                       tagModeEnabled={this.state.tagModeEnabled}
+                       tag={this.state.tag}
+                       filter={this.handleFilterClick}
+                       handleTagTextChange={this.handleTagTextChange}
+                       handleTagClick={this.handleTagClick}
+                       handleTagModeChange={this.handleTagModeChange}/>
+              <Button onClick={this.handleShowCharts}>Show charts</Button>
+              {charts}
+            </div>
+          }
 
           <ImgGrid data={this.state.filteredData}
                    search={this.handleSearchClick}
-                   tagClick={this.handleRowRemoval}/>
+                   tagClick={this.handleRowRemoval}
+          showAdvanced={this.state.showAdvanced}/>
         </div>
     );
   }
