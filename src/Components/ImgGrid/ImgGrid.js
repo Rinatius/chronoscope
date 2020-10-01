@@ -4,8 +4,12 @@ import {
 } from "@material-ui/core";
 import React from "react";
 
+const areEqual = (prevProps, nextProps) => {
+  return prevProps.data === nextProps.data;
+}
+
 const ImgGrid = (props) => (
-    <Grid container justifyContent="center" spacing={2}>
+    <Grid container justifyContent="center" justifyContent="center" spacing={2}>
         {props.data.map((img_data, i) => (
             <Grid item key={img_data.get('key')}>
                 <Card style={{width: 400}}>
@@ -35,6 +39,11 @@ const ImgGrid = (props) => (
                                 onClick={() => props.tagClick('negtag', i)}>
                             NEGTAG
                         </Button>
+                        <Button size="medium"
+                                color="primary"
+                                onClick={() => props.search(i)}>
+                            SEARCH
+                        </Button>
                     </CardActions>
                 </Card>
             </Grid>
@@ -42,4 +51,4 @@ const ImgGrid = (props) => (
     </Grid>
 )
 
-export default ImgGrid;
+export default React.memo(ImgGrid, areEqual);

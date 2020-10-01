@@ -2,22 +2,23 @@ import React, { Component } from 'react';
 import './App.css';
 import { extent, nest, timeFormat, sum, timeDays, range } from 'd3';
 import { Button, Grid, TextField, CircularProgress } from '@material-ui/core';
-import { List } from 'immutable'
+import { List } from 'immutable';
+import loadImage from 'blueimp-load-image';
 
-import TagData from './Components/TagData/TagData'
-import Charts from './Components/Charts/Charts'
-import Dropzone from './Components/UploadFile/Dropzone'
+
+import TagData from './Components/TagData/TagData';
+import Charts from './Components/Charts/Charts';
+import Dropzone from './Components/UploadFile/Dropzone';
 import ImgGrid from "./Components/ImgGrid/ImgGrid";
-import getImgsFromImg from './lukoshko/api'
+import getImgsFromImg from './lukoshko/api';
 
 class App extends Component {
 
   state = {
-    data: List([]),
+    data: new Map(),
     filteredData: List([]),
     timeFilteredData: List([]),
     tag: "",
-    tagSelector: "",
     nestedData: [{values: []}],
     nestedPercentData: [{values: []}],
     nestedAllTags: [],
@@ -30,11 +31,13 @@ class App extends Component {
     snackbarOpen: false,
     initialImage: null,
     APIRadius: 0.93,
-    spinner: false
+    spinner: false,
+    autoDiscovery: false
   }
 
   excludeTagNegtag = (data) => {
     let result = data
+    console.log(data)
     if (this.state.tag.length > 0) {
       result = data.filter(d => {
         const res = !(d.get("tags").includes(this.state.tag) ||
@@ -50,10 +53,10 @@ class App extends Component {
   allFilter = (data=null) => {
     let filtered = data
     if (!filtered) {
-      filtered = this.state.data
+      filtered = this.state.data.toList()
     }
-    if (this.state.tagSelector.length > 0) {
-      filtered = filtered.filter(d => d.get("tags").includes(this.state.tagSelector));
+    if (this.state.tag.length > 0) {
+      filtered = filtered.filter(d => d.get("tags").includes(this.state.tag));
     }
     if (this.state.tagModeEnabled) {
       filtered = this.excludeTagNegtag(filtered)
@@ -90,9 +93,9 @@ class App extends Component {
       this.setState({
         data: data
       })
-      this.setState({
-        filteredData: data
-      })
+      // this.setState({
+      //   filteredData: data
+      // })
       this.setState({
         filteredData: this.state.filteredData.delete(index)
       })
@@ -121,7 +124,7 @@ class App extends Component {
 
   nestData = () => {
     let flatData = []
-    let data = this.state.data.toJS()
+    let data = this.state.data.toList().toJS()
 
     //Denormalize data by tag
     data.forEach(d => d.tags.forEach(t => {
@@ -188,6 +191,12 @@ class App extends Component {
     this.tagRow(action, index);
   };
 
+  handleSearchClick = (index) => {
+    console.log(index)
+    console.log(this.state.filteredData)
+    this.handlePostData([this.state.filteredData.get(index).get('url')]);
+  };
+
   handleNestDataClick = () => {
     this.nestData();
   };
@@ -199,6 +208,12 @@ class App extends Component {
   handleTagModeChange = (event) => {
     this.setState({
       tagModeEnabled: event.target.checked
+    });
+  };
+
+  handleAutoDiscoveryModeChange = (event) => {
+    this.setState({
+      autoDiscovery: event.target.checked
     });
   };
 
@@ -227,15 +242,21 @@ class App extends Component {
     this.setState({APIRadius: event.target.value})
   };
 
-  handlePostData = async () => {
-    if (!this.state.file) {
+  handlePostData = async (urls=null) => {
+    if ((!this.state.file) && urls===null) {
       alert("No file to upload")
       return 0
     }
     this.setState({spinner: true})
     console.log("Sending data")
-    const data = await getImgsFromImg(this.state.file, this.state.APIRadius)
-    this.setState({data: data})
+    let data
+    if (urls===null) {
+      data = await getImgsFromImg(this.state.APIRadius, this.state.file)
+    } else {
+      data = await getImgsFromImg(this.state.APIRadius, null, urls)
+    }
+    const mergedData = data.merge(this.state.data);
+    this.setState({data: mergedData})
     this.allFilter()
     this.setState({spinner: false})
   }
@@ -264,7 +285,10 @@ class App extends Component {
     return (
         <div className="App">
 
-          <Grid container direction="column" alignItems="center" justify="center">
+          <Grid container
+                direction="column"
+                alignItems="center"
+                justify="center">
             <Grid container justify="center">
               <Dropzone handleChange={this.handleFileChange}
                         handleClick={this.handleSnackbarClick}
@@ -272,7 +296,9 @@ class App extends Component {
             </Grid>
             <Grid container justify="center">
               {this.state.initialImage ?
-                  <img src={this.state.initialImage} alt="initial_image" style={{height: 300}}/>
+                  <img src={this.state.initialImage}
+                       alt="initial_image"
+                       style={{height: 300}}/>
                   :
                   null
               }
@@ -299,15 +325,20 @@ class App extends Component {
 
           <TagData
               tagModeEnabled={this.state.tagModeEnabled}
+              autoDiscoveryMode={this.state.autoDiscovery}
               tag={this.state.tag}
+              filter={this.handleFilterClick}
               handleTagTextChange={this.handleTagTextChange}
               handleTagClick={this.handleTagClick}
-              handleTagModeChange={this.handleTagModeChange}/>
+              handleTagModeChange={this.handleTagModeChange}
+              handleAutoDiscoveryModeChange={this.handleAutoDiscoveryModeChange}/>
 
           <Button onClick={this.handleShowCharts}>Show charts</Button>
           {charts}
 
-          <ImgGrid data={this.state.filteredData} tagClick={this.handleRowRemoval}/>
+          <ImgGrid data={this.state.filteredData}
+                   search={this.handleSearchClick}
+                   tagClick={this.handleRowRemoval}/>
         </div>
     );
   }
